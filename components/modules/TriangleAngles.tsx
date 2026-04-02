@@ -86,7 +86,7 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
             <svg 
                 ref={svgRef} 
                 viewBox="0 0 600 400" 
-                className="w-full h-full max-h-[500px] overflow-visible select-none"
+                className="w-full h-full overflow-visible select-none"
                 preserveAspectRatio="xMidYMid meet"
             >
                 <polygon

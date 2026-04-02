@@ -11,6 +11,26 @@ import {
     ExteriorAngle,
 } from './components/modules/AllModules';
 import { BookIcon, LightbulbIcon, ChevronLeftIcon } from './components/icons';
+import PracticeShell from './components/practice/PracticeShell';
+import Level1Explore from './levels/Level1/stages/ExploreStage';
+import Level1Quiz from './levels/Level1/stages/QuizStage';
+import Level2Explore from './levels/Level2/stages/ExploreStage';
+import Level2Quiz from './levels/Level2/stages/QuizStage';
+
+// Map module id → practice components (only for modules that have practice content)
+const practiceMap: Record<string, {
+    Explore: React.FC<{ onComplete: () => void }>;
+    Quiz: React.FC<{ onComplete: (score: number, wrong: number) => void }>;
+}> = {
+    'triangle-angles': {
+        Explore: ({ onComplete }) => <Level1Explore guessAnswer={null} onComplete={onComplete} />,
+        Quiz: Level1Quiz,
+    },
+    'exterior-angle': {
+        Explore: Level2Explore,
+        Quiz: Level2Quiz,
+    },
+};
 
 const modules: Module[] = [
     { id: 'angle-basics', title: '角的基本認識', keywords: ['角', '銳角', '鈍角', '直角', '角度'], component: AngleBasics, initialInfo: { title: "角的基本認識", data: [], concept: "", aiTip: "" } },
@@ -49,6 +69,7 @@ const App: React.FC = () => {
     const [currentInfo, setCurrentInfo] = useState<ModuleInfo>(modules[0].initialInfo);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [practiceMode, setPracticeMode] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
     const handleSelectModule = (index: number) => {
@@ -56,11 +77,16 @@ const App: React.FC = () => {
         setCurrentInfo(modules[index].initialInfo);
         setSearchQuery('');
         setIsSearchFocused(false);
+        setPracticeMode(false);
     };
 
     const handleBackToHome = () => {
         setSelectedModuleIndex(null);
+        setPracticeMode(false);
     };
+
+    const selectedModuleId = selectedModuleIndex !== null ? modules[selectedModuleIndex].id : null;
+    const hasPractice = selectedModuleId !== null && selectedModuleId in practiceMap;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -180,26 +206,78 @@ const App: React.FC = () => {
 
     // ===== 模組內頁 =====
     const CurrentModuleComponent = modules[selectedModuleIndex].component;
+    const practice = selectedModuleId ? practiceMap[selectedModuleId] : undefined;
 
+    // --- Top toolbar (full-width, shared by both modes) ---
+    const renderTopBar = () => (
+        <div className="flex items-center gap-3 shrink-0 mb-4 z-[60]">
+            <button
+                onClick={handleBackToHome}
+                className="bg-[#3d5a80] hover:bg-[#98c1d9] text-[#e0fbfc] hover:text-[#293241] rounded-full p-2.5 transition-colors shadow-lg shrink-0"
+            >
+                <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <h1 className="text-[#e0fbfc] text-lg font-black truncate">
+                {modules[selectedModuleIndex].title}
+            </h1>
+            {hasPractice && (
+                <div className="flex bg-[#3d5a80] rounded-full p-1 shadow-lg ml-auto shrink-0">
+                    <button
+                        onClick={() => setPracticeMode(false)}
+                        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                            !practiceMode
+                                ? 'bg-[#e0fbfc] text-[#293241] shadow-md'
+                                : 'text-[#98c1d9] hover:text-[#e0fbfc]'
+                        }`}
+                    >
+                        自由操作
+                    </button>
+                    <button
+                        onClick={() => setPracticeMode(true)}
+                        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                            practiceMode
+                                ? 'bg-[#ee6c4d] text-white shadow-md'
+                                : 'text-[#98c1d9] hover:text-[#e0fbfc]'
+                        }`}
+                    >
+                        練習模式
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+
+    // --- Practice mode: full-width ---
+    if (practiceMode && practice) {
+        return (
+            <div className="bg-[#293241] min-h-[100dvh] lg:h-[100dvh] flex flex-col p-4 sm:p-5 text-[#293241] overflow-y-auto lg:overflow-hidden">
+                {renderTopBar()}
+                <main className="flex-1 max-w-7xl mx-auto w-full min-h-0">
+                    <section className="bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative h-full border border-white/20">
+                        <PracticeShell
+                            ExploreComponent={practice.Explore}
+                            QuizComponent={practice.Quiz}
+                            onExit={() => setPracticeMode(false)}
+                        />
+                    </section>
+                </main>
+            </div>
+        );
+    }
+
+    // --- Sandbox mode: two-column layout ---
     return (
         <div className="bg-[#293241] min-h-[100dvh] lg:h-[100dvh] flex flex-col p-4 sm:p-5 text-[#293241] overflow-y-auto lg:overflow-hidden">
 
-            {/* 行動版：返回按鈕 */}
-            <div className="lg:hidden w-full mb-4 shrink-0 z-[60]">
-                <button
-                    onClick={handleBackToHome}
-                    className="bg-[#3d5a80] hover:bg-[#98c1d9] text-[#e0fbfc] hover:text-[#293241] rounded-full p-2.5 transition-colors shadow-lg"
-                >
-                    <ChevronLeftIcon className="w-5 h-5" />
-                </button>
-            </div>
+            {/* 頂部工具列：返回 + 標題 + 模式切換 */}
+            {renderTopBar()}
 
             {/* 主要內容區域 */}
             <main className="flex-1 flex flex-col lg:flex-row gap-4 max-w-7xl mx-auto w-full min-h-0">
 
-                {/* 左側：數學模組互動區 */}
-                <div className="flex-[60] flex flex-col min-h-[450px] lg:min-h-0">
-                    <section className="bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative flex-1 border border-white/20">
+                {/* 左側：數學模組互動區（較矮） */}
+                <div className="flex-[60] flex flex-col min-h-[320px] lg:min-h-0">
+                    <section className="bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative flex-1 border border-white/20 lg:max-h-[calc(100vh-120px)]">
                         <CurrentModuleComponent key={modules[selectedModuleIndex].id} setInfo={setCurrentInfo} />
                     </section>
                 </div>
@@ -207,19 +285,8 @@ const App: React.FC = () => {
                 {/* 右側：側邊資訊欄 */}
                 <aside className="flex-[40] flex flex-col gap-4 lg:max-w-[380px] min-h-0 relative z-[55]">
 
-                    {/* 桌面版：返回按鈕 */}
-                    <div className="hidden lg:block shrink-0">
-                        <button
-                            onClick={handleBackToHome}
-                            className="bg-[#3d5a80] hover:bg-[#98c1d9] text-[#e0fbfc] hover:text-[#293241] rounded-full p-2.5 transition-colors shadow-lg"
-                        >
-                            <ChevronLeftIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-
                     {/* 數據看板 */}
                     <div className="bg-[#EEEEEE] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] shrink-0">
-                        <h2 className="text-[#3d5a80] text-xl font-black mb-3">{modules[selectedModuleIndex].title}</h2>
                         <div className="space-y-2">
                             {currentInfo.data.map(item => (
                                 <div key={item.label} className="flex justify-between items-center border-b border-[#3d5a80]/5 pb-1">

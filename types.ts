@@ -20,3 +20,17 @@ export interface ModuleInfo {
   concept: string;
   aiTip: string;
 }
+
+export interface DialogLine {
+  speaker: string;
+  expression: string;
+  text: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}

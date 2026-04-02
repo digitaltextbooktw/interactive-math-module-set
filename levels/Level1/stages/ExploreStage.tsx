@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { playSound } from '../../../utils/sound';
 
 interface Point { x: number; y: number; }
@@ -20,7 +20,7 @@ const TRIANGLES: TriDef[] = [
     {x: EQ_CX - EQ_SIDE/2, y: EQ_BY},  // B bottom-left
     {x: EQ_CX + EQ_SIDE/2, y: EQ_BY},  // C bottom-right
   ], angles: [60,60,60], labels: ['A','B','C'], baseEdges: [1,2,1] },
-  { name: '直角三角形', points: [{x:200,y:450},{x:200,y:150},{x:500,y:450}], angles: [90,45,45], labels: ['A','B','C'], baseEdges: [2,0,0] },
+  { name: '直角三角形', points: [{x:200,y:480},{x:200,y:210},{x:500,y:480}], angles: [90,45,45], labels: ['A','B','C'], baseEdges: [2,0,0] },
   // 30-120-30: isoceles with base 500, apex at calculated height
   { name: '鈍角三角形', points: [
     {x:150,y:450},
@@ -39,6 +39,31 @@ function geoAngleAt(pts: [Point, Point, Point], vi: number): number {
   let diff = Math.abs(a2 - a1);
   if (diff > Math.PI) diff = 2 * Math.PI - diff;
   return diff * 180 / Math.PI;
+}
+
+// Draw an SVG arc sector path from vertex center between two adjacent edges
+function sectorPath(center: Point, p1: Point, p2: Point, r: number): string {
+  const a1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+  const a2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+  let diff = a2 - a1;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const s = { x: center.x + r * Math.cos(a1), y: center.y + r * Math.sin(a1) };
+  const e = { x: center.x + r * Math.cos(a2), y: center.y + r * Math.sin(a2) };
+  const largeArc = Math.abs(diff) > Math.PI ? 1 : 0;
+  const sweep = diff > 0 ? 1 : 0;
+  return `M ${center.x},${center.y} L ${s.x},${s.y} A ${r},${r} 0 ${largeArc},${sweep} ${e.x},${e.y} Z`;
+}
+
+// Compute the midpoint position for angle label inside a sector
+function sectorLabelPos(center: Point, p1: Point, p2: Point, dist: number): Point {
+  const a1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+  const a2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+  let diff = a2 - a1;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  const mid = a1 + diff / 2;
+  return { x: center.x + dist * Math.cos(mid), y: center.y + dist * Math.sin(mid) };
 }
 
 interface ProtractorState {
@@ -156,21 +181,24 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
     if (!done.includes(triIdx)) setDone(newDone);
 
     if (newDone.length >= 3 && !allDoneOverlay) {
-      // All 3 done — show big overlay then guess recall
       setInfo('');
       setAllDoneOverlay(allCompleteText);
-      setTimeout(() => {
-        const degreeValues = [90, 180, 270, 360];
-        const guessIdx = guessAnswer ? degreeValues.indexOf(guessAnswer) : -1;
-        const wasCorrect = guessIdx === guessCorrectIndex;
-        const recallText = wasCorrect
-          ? guessRecallCorrect
-          : guessRecallWrong(guessAnswer ? `${guessAnswer}°` : '?');
-        setAllDoneOverlay(recallText);
-      }, 2000);
-      setTimeout(() => {
-        onComplete();
-      }, 4000);
+      if (guessAnswer != null) {
+        // Story mode: show guess recall
+        setTimeout(() => {
+          const degreeValues = [90, 180, 270, 360];
+          const guessIdx = degreeValues.indexOf(guessAnswer);
+          const wasCorrect = guessIdx === guessCorrectIndex;
+          const recallText = wasCorrect
+            ? guessRecallCorrect
+            : guessRecallWrong(`${guessAnswer}°`);
+          setAllDoneOverlay(recallText);
+        }, 2000);
+        setTimeout(() => onComplete(), 4000);
+      } else {
+        // Practice mode: skip recall, complete after overlay
+        setTimeout(() => onComplete(), 2500);
+      }
     }
   }, [measured, triIdx, done, guessAnswer, allDoneOverlay, onComplete]);
 
@@ -186,9 +214,10 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const pt = clientToSvg(svg, clientX, clientY);
 
-    // Check vertex click
+    // Check vertex click (skip already-measured vertices so drag falls through)
     const t = TRIANGLES[triIdx];
     for (let i = 0; i < 3; i++) {
+      if (measuredRef.current[i] !== null) continue;
       const dx = pt.x - t.points[i].x;
       const dy = pt.y - t.points[i].y;
       if (Math.sqrt(dx * dx + dy * dy) < 35) {
@@ -284,9 +313,10 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
       let newY = Math.max(95, Math.min(505, dragRef.current.protY + dy));
       setProt(prev => ({ ...prev, x: newX, y: newY }));
 
-      // Auto-snap
+      // Auto-snap (skip already-measured vertices)
       const t = TRIANGLES[triIdx];
       for (let i = 0; i < 3; i++) {
+        if (measuredRef.current[i] !== null) continue;
         const sx = newX - t.points[i].x;
         const sy = newY - t.points[i].y;
         if (Math.sqrt(sx * sx + sy * sy) < 30) {
@@ -316,22 +346,25 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
 
   const renderTicks = () => {
     const lines: string[] = [];
+    // Counter-rotation so numbers always stay upright in screen space
+    // The protractor group applies rotate(-prot.rotation), so we add prot.rotation back
+    const counterRot = prot.rotation;
     for (let i = 0; i <= 180; i++) {
       const rad = i * Math.PI / 180;
       const cos = Math.cos(rad);
       const sin = Math.sin(rad);
       const x1 = 90 * cos;
       const y1 = prot.flipY * (-90 * sin);
-      let len = 4, op = 0.2;
-      if (i % 10 === 0) { len = 10; op = 0.4; }
-      if (i % 30 === 0) { len = 15; op = 0.8; }
+      let len = 4, op = 0.15;
+      if (i % 10 === 0) { len = 8; op = 0.35; }
+      if (i % 30 === 0) { len = 12; op = 0.7; }
       const x2 = (90 - len) * cos;
       const y2 = prot.flipY * (-(90 - len) * sin);
-      lines.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94A3B8" stroke-width="1" opacity="${op}"/>`);
+      lines.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#64748B" stroke-width="${i % 30 === 0 ? 1.5 : 1}" opacity="${op}"/>`);
       if (i % 30 === 0) {
-        const tx = (90 - 22) * cos;
-        const ty = prot.flipY * (-(90 - 22) * sin);
-        lines.push(`<text x="${tx}" y="${ty}" text-anchor="middle" font-size="8" fill="#475569" font-weight="800" transform="rotate(${prot.flipY * (i - 90)}, ${tx}, ${ty}) translate(0, 3)">${i}</text>`);
+        const tx = (90 - 24) * cos;
+        const ty = prot.flipY * (-(90 - 24) * sin);
+        lines.push(`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#334155" font-weight="900" transform="rotate(${counterRot}, ${tx}, ${ty})">${i}°</text>`);
       }
     }
     return lines.join('');
@@ -410,7 +443,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
               {/* Reset button */}
               <button onClick={resetTri} style={{
                 background: '#3d5a80', color: 'white', border: 'none', borderRadius: 10,
-                padding: 8, minHeight: 40, minWidth: 40, cursor: 'pointer', fontWeight: 900,
+                padding: 8, minHeight: 40, minWidth: 40, cursor: 'pointer', fontWeight: 600,
                 boxShadow: '0 3px 0 #2D3E50', marginLeft: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
@@ -431,7 +464,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
           ) : (
             <button onClick={confirm} style={{
               background: '#3d5a80', color: 'white', border: 'none', borderRadius: 10,
-              padding: '8px 16px', minHeight: 44, cursor: 'pointer', fontWeight: 900, fontSize: 14,
+              padding: '8px 16px', minHeight: 44, cursor: 'pointer', fontWeight: 600, fontSize: 14,
               boxShadow: '0 3px 0 #2D3E50', marginLeft: 5,
             }}>確認</button>
           )}
@@ -449,9 +482,9 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
         >
           <defs>
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
-              <feOffset dx="0" dy="2" result="offsetblur" />
-              <feComponentTransfer><feFuncA type="linear" slope="0.3" /></feComponentTransfer>
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+              <feOffset dx="0" dy="1" result="offsetblur" />
+              <feComponentTransfer><feFuncA type="linear" slope="0.12" /></feComponentTransfer>
               <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
@@ -470,13 +503,40 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
             const m2 = Math.sqrt(v2.x ** 2 + v2.y ** 2);
             const bis = { x: -(v1.x / m1 + v2.x / m2), y: -(v1.y / m1 + v2.y / m2) };
             const bm = Math.sqrt(bis.x ** 2 + bis.y ** 2);
-            const lx = p.x + (bis.x / bm) * 35;
-            const ly = p.y + (bis.y / bm) * 35;
+            const lx = p.x + (bis.x / bm) * 42;
+            const ly = p.y + (bis.y / bm) * 42;
+
+            if (m) {
+              // Measured: show colored sector with angle label
+              const sectorR = 90;
+              const labelPos = sectorLabelPos(p, prev, next, sectorR * 0.72);
+              return (
+                <g key={i}>
+                  <path
+                    d={sectorPath(p, prev, next, sectorR)}
+                    fill="#10B981" fillOpacity="0.25"
+                    stroke="#10B981" strokeWidth="2"
+                  />
+                  <text
+                    x={labelPos.x} y={labelPos.y}
+                    textAnchor="middle" dominantBaseline="central"
+                    fontSize="18" fontWeight="900" fill="#065F46"
+                  >
+                    {measured[i]}°
+                  </text>
+                  <text x={lx} y={ly + 5} textAnchor="middle" fontSize="16" fontWeight="900" fill="#293241" opacity="0.6">
+                    {tri.labels[i]}
+                  </text>
+                </g>
+              );
+            }
+
+            // Unmeasured: show clickable circle with "?"
             return (
               <g key={i} onClick={() => snapTo(i)} style={{ cursor: 'pointer' }}>
-                <circle cx={p.x} cy={p.y} r="14" fill={m ? '#10B981' : 'white'} stroke={m ? '#10B981' : '#3d5a80'} strokeWidth="2" />
-                <text x={p.x} y={p.y + 5} textAnchor="middle" fontSize="12" fontWeight="900" fill={m ? 'white' : '#3d5a80'}>
-                  {m ? `${measured[i]}°` : '?'}
+                <circle cx={p.x} cy={p.y} r="18" fill="white" stroke="#3d5a80" strokeWidth="2.5" />
+                <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="900" fill="#3d5a80">
+                  ?
                 </text>
                 <text x={lx} y={ly + 5} textAnchor="middle" fontSize="16" fontWeight="900" fill="#293241" opacity="0.6">
                   {tri.labels[i]}
@@ -488,14 +548,16 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
           {/* Protractor */}
           <g style={shaking ? { animation: 'protractorShake 0.1s ease-in-out 3' } : undefined}>
             <g transform={`translate(${prot.x}, ${prot.y}) rotate(${-prot.rotation})`}>
-              <path d={arcPath} fill="rgba(255,255,255,0.95)" stroke="#CBD5E1" strokeWidth="1.5" data-mode="move" style={{ cursor: 'grab' }} />
-              <line x1="-90" y1="0" x2="90" y2="0" stroke="#CBD5E1" strokeWidth="1.5" />
+              <path d={arcPath} fill="rgba(255,255,255,0.92)" stroke="#94A3B8" strokeWidth="1.5" data-mode="move" style={{ cursor: 'grab' }} filter="url(#shadow)" />
+              <line x1="-90" y1="0" x2="90" y2="0" stroke="#94A3B8" strokeWidth="1.5" />
+              {/* Note: dangerouslySetInnerHTML is safe here — content is generated from numeric loop, not user input */}
               <g pointerEvents="none" dangerouslySetInnerHTML={{ __html: renderTicks() }} />
               <circle cx="0" cy="0" r="5" fill="#3d5a80" />
               <g transform={`rotate(${-prot.flipY * prot.pointerAngle})`}>
-                <line x1="0" y1="0" x2="90" y2="0" stroke={isCorrect ? '#10B981' : '#ee6c4d'} strokeWidth="3" />
-                <g data-mode="pointer" style={{ cursor: 'pointer' }} transform="translate(90, 0)">
-                  <circle r="22" fill="white" stroke={isCorrect ? '#10B981' : '#ee6c4d'} strokeWidth="3" />
+                <line x1="0" y1="0" x2="110" y2="0" stroke={isCorrect ? '#10B981' : '#ee6c4d'} strokeWidth="2.5" strokeLinecap="round" />
+                <g data-mode="pointer" style={{ cursor: 'pointer' }} transform="translate(110, 0)">
+                  <circle r="14" fill="white" stroke={isCorrect ? '#10B981' : '#ee6c4d'} strokeWidth="3" />
+                  <circle r="4" fill={isCorrect ? '#10B981' : '#ee6c4d'} />
                 </g>
               </g>
             </g>
@@ -504,8 +566,8 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
           {/* Readout */}
           {prot.hasInteracted && (
             <>
-              <rect x={rx - 30} y={ry - 15} width="60" height="30" rx="15" fill="#ee6c4d" filter="url(#shadow)" />
-              <text x={rx} y={ry + 6} textAnchor="middle" fontWeight="900" fontSize="18" fill="white">
+              <rect x={rx - 32} y={ry - 16} width="64" height="32" rx="16" fill={isCorrect ? '#10B981' : '#ee6c4d'} filter="url(#shadow)" />
+              <text x={rx} y={ry + 1} textAnchor="middle" dominantBaseline="central" fontWeight="900" fontSize="17" fill="white">
                 {prot._displayAngle ?? Math.round(prot.pointerAngle)}°
               </text>
             </>
