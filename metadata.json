@@ -1,0 +1,5 @@
+{
+  "name": "Interactive Math Module Set",
+  "description": "An interactive web application for exploring fundamental geometry concepts. It features modules for angles, triangles, constructions, congruence, and more, with real-time feedback and explanations.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,404 @@
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import type { Point, ModuleInfo } from '../../types';
+
+type ConstructionMode = 'foot' | 'bisector' | 'angle-bisector';
+
+// 顏色常數
+const COLORS = {
+    main: '#3d5a80',
+    aux: '#98c1d9',
+    fill: 'rgba(152, 193, 217, 0.2)',
+    text: '#293241',
+    highlight: '#ee6c4d',
+    white: '#EEEEEE'
+};
+
+const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const [pointB, setPointB] = useState<Point>({ x: 250, y: 150 });
+    const [isDragging, setIsDragging] = useState(false);
+    const lineY = 300;
+    const pointA: Point = { x: 200, y: lineY };
+
+    const angleRad = Math.atan2(pointA.y - pointB.y, pointB.x - pointA.x);
+    const angleDeg = Math.round(angleRad * 180 / Math.PI);
+    const isPerpendicular = Math.abs(angleDeg - 90) < 2;
+
+    useEffect(() => {
+        setInfo({
+            title: "基本作圖 - 垂足",
+            data: isPerpendicular
+                ? [{ label: "關係", value: "垂直 (⊥)" }]
+                : [{ label: "夾角", value: `${angleDeg}°` }],
+            concept: "從直線外的一點向該直線作垂直線，兩者的交點即稱為垂足。",
+            aiTip: "拖動橘色點 B 使 AB 與 L 垂直。當達到 90° 時，會出現垂直符號。"
+        });
+    }, [angleDeg, isPerpendicular, setInfo]);
+
+    const handleInteraction = useCallback((clientX: number, clientY: number) => {
+        if (!isDragging || !svgRef.current) return;
+        const svg = svgRef.current;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+        
+        setPointB({ 
+            x: svgP.x, 
+            y: Math.min(svgP.y, lineY - 40)
+        });
+    }, [isDragging, lineY]);
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        handleInteraction(e.clientX, e.clientY);
+    }, [handleInteraction]);
+
+    const handleTouchMove = useCallback((e: TouchEvent) => {
+        if (isDragging) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    }, [isDragging, handleInteraction]);
+
+    const handleMouseUp = useCallback(() => setIsDragging(false), []);
+
+    useEffect(() => {
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleMouseUp);
+        };
+    }, [handleMouseMove, handleMouseUp, handleTouchMove]);
+
+    return (
+        <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="overflow-visible select-none">
+            <line x1="50" y1={lineY} x2="450" y2={lineY} stroke={COLORS.main} strokeWidth="4" />
+            <text x="460" y={lineY + 5} fill={COLORS.main} className="font-bold text-lg select-none">L</text>
+            
+            <line x1={pointA.x} y1={pointA.y} x2={pointB.x} y2={pointB.y} stroke={isPerpendicular ? COLORS.highlight : COLORS.aux} strokeWidth="3" strokeDasharray={isPerpendicular ? "0" : "6"}/>
+
+            {isPerpendicular && (
+                <g className="select-none">
+                    <path d={`M ${pointA.x} ${pointA.y - 25} L ${pointA.x + 25} ${pointA.y - 25} L ${pointA.x + 25} ${pointA.y}`} fill="none" stroke={COLORS.highlight} strokeWidth="2" />
+                    <text x={pointA.x + 30} y={pointA.y - 35} fill={COLORS.highlight} className="font-bold text-base select-none">A 為垂足</text>
+                </g>
+            )}
+            
+            <circle cx={pointA.x} cy={pointA.y} r="6" fill={COLORS.text} />
+            <text x={pointA.x - 20} y={pointA.y + 25} fill={COLORS.text} className="font-bold select-none">A</text>
+            
+            <g 
+                onMouseDown={() => setIsDragging(true)} 
+                onTouchStart={() => setIsDragging(true)}
+                className="cursor-grab active:cursor-grabbing"
+            >
+                <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="4" />
+                <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" className="font-bold select-none pointer-events-none text-xs" fill={COLORS.highlight}>B</text>
+            </g>
+        </svg>
+    );
+};
+
+const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const [pointA, setPointA] = useState<Point>({ x: 120, y: 220 });
+    const [pointB, setPointB] = useState<Point>({ x: 380, y: 180 });
+    const [draggingPoint, setDraggingPoint] = useState<'A' | 'B' | null>(null);
+    const [showBisector, setShowBisector] = useState(false);
+
+    const midpoint: Point = {
+        x: (pointA.x + pointB.x) / 2,
+        y: (pointA.y + pointB.y) / 2,
+    };
+
+    const dx = pointB.x - pointA.x;
+    const dy = pointB.y - pointA.y;
+    const length = Math.sqrt(dx * dx + dy * dy) || 1;
+    const unitDx = dx / length;
+    const unitDy = dy / length;
+    const perpDx = -unitDy;
+    const perpDy = unitDx;
+
+    const bisectorHalfLength = 130;
+
+    const raSize = 15;
+    const raP1x = midpoint.x + unitDx * raSize;
+    const raP1y = midpoint.y + unitDy * raSize;
+    const raP2x = midpoint.x + unitDx * raSize + perpDx * raSize;
+    const raP2y = midpoint.y + unitDy * raSize + perpDy * raSize;
+    const raP3x = midpoint.x + perpDx * raSize;
+    const raP3y = midpoint.y + perpDy * raSize;
+
+    useEffect(() => {
+        setInfo({
+            title: "基本作圖 - 中垂線",
+            data: [
+                { label: "AB 長度", value: `${(length / 10).toFixed(1)} 單位` },
+                { label: "性質", value: "垂直且平分" }
+            ],
+            concept: "通過線段中點且垂直於該線段的直線稱為中垂線。",
+            aiTip: "拖動端點 A 或 B。點擊畫布上方的按鈕顯示中垂線。"
+        });
+    }, [length, setInfo]);
+
+    const handleInteraction = useCallback((clientX: number, clientY: number) => {
+        if (!draggingPoint || !svgRef.current) return;
+        const svg = svgRef.current;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+        
+        const x = Math.max(40, Math.min(460, svgP.x));
+        const y = Math.max(40, Math.min(360, svgP.y));
+
+        if (draggingPoint === 'A') setPointA({ x, y });
+        else setPointB({ x, y });
+    }, [draggingPoint]);
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        handleInteraction(e.clientX, e.clientY);
+    }, [handleInteraction]);
+
+    const handleTouchMove = useCallback((e: TouchEvent) => {
+        if (draggingPoint) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    }, [draggingPoint, handleInteraction]);
+
+    useEffect(() => {
+        const handleMouseUp = () => setDraggingPoint(null);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleMouseUp);
+        };
+    }, [handleMouseMove, handleTouchMove]);
+
+    return (
+        <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
+             <div className="flex-1 relative">
+                <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
+                    <line x1={pointA.x} y1={pointA.y} x2={pointB.x} y2={pointB.y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
+
+                    {showBisector && (
+                        <>
+                            <line x1={midpoint.x + perpDx * bisectorHalfLength} y1={midpoint.y + perpDy * bisectorHalfLength} 
+                                  x2={midpoint.x - perpDx * bisectorHalfLength} y2={midpoint.y - perpDy * bisectorHalfLength} 
+                                  stroke={COLORS.highlight} strokeWidth="3" strokeDasharray="8" />
+                            <path d={`M ${raP1x} ${raP1y} L ${raP2x} ${raP2y} L ${raP3x} ${raP3y}`} fill="none" stroke={COLORS.highlight} strokeWidth="2" />
+                            
+                            <text 
+                                x={midpoint.x + perpDx * (bisectorHalfLength + 25)} 
+                                y={midpoint.y + perpDy * (bisectorHalfLength + 25)} 
+                                fill={COLORS.highlight} 
+                                className="font-bold text-xl select-none"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                            >
+                                L
+                            </text>
+                        </>
+                    )}
+
+                    <circle cx={midpoint.x} cy={midpoint.y} r="6" fill={COLORS.highlight} />
+                    <text x={midpoint.x + 10 * perpDx} y={midpoint.y - 10 * perpDy - 5} fill={COLORS.text} className="font-bold text-sm select-none">M</text>
+
+                    <g 
+                        onMouseDown={() => setDraggingPoint('A')} 
+                        onTouchStart={() => setDraggingPoint('A')}
+                        className="cursor-grab active:cursor-grabbing"
+                    >
+                        <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
+                        <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" className="font-bold text-xs select-none pointer-events-none" fill={COLORS.main}>A</text>
+                    </g>
+                    <g 
+                        onMouseDown={() => setDraggingPoint('B')} 
+                        onTouchStart={() => setDraggingPoint('B')}
+                        className="cursor-grab active:cursor-grabbing"
+                    >
+                        <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
+                        <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" className="font-bold text-xs select-none pointer-events-none" fill={COLORS.main}>B</text>
+                    </g>
+                </svg>
+                
+                <div className="absolute top-6 left-0 right-0 flex justify-center pointer-events-none">
+                    <button 
+                        onClick={() => setShowBisector(!showBisector)} 
+                        className="pointer-events-auto px-10 py-3 font-bold rounded-2xl shadow-xl transition-all w-64 bg-[#ee6c4d] text-white hover:bg-[#d85c3d] hover:scale-105 active:scale-95"
+                    >
+                        {showBisector ? "隱藏中垂線" : "顯示中垂線"}
+                    </button>
+                </div>
+             </div>
+        </div>
+    );
+};
+
+const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const center: Point = { x: 250, y: 220 };
+    const radius = 130;
+    const [points, setPoints] = useState<[Point, Point]>([
+        { x: center.x + radius, y: center.y },
+        { x: center.x + radius * Math.cos(Math.PI/3), y: center.y - radius * Math.sin(Math.PI/3) }
+    ]);
+    const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+    const [showBisector, setShowBisector] = useState(false);
+
+    const getAngle = (p: Point) => Math.atan2(center.y - p.y, p.x - center.x) * 180 / Math.PI;
+    const angleA = getAngle(points[0]);
+    const angleB = getAngle(points[1]);
+    const totalAngle = Math.abs(angleA - angleB);
+    const halfAngle = totalAngle / 2;
+
+    useEffect(() => {
+        setInfo({
+            title: "基本作圖 - 角平分線",
+            data: [
+                { label: "∠AOB", value: `${totalAngle.toFixed(1)}°` },
+                { label: "平分角", value: `${halfAngle.toFixed(1)}°` }
+            ],
+            concept: "將一個角分成兩個相等角度的射線稱為角平分線。",
+            aiTip: "拖動 A 或 B 改變角度。使用上方按鈕確認兩邊角度相等。"
+        });
+    }, [totalAngle, halfAngle, setInfo]);
+
+    const handleInteraction = useCallback((clientX: number, clientY: number) => {
+        if (draggingIndex === null || !svgRef.current) return;
+        const svg = svgRef.current;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+        
+        const dx = svgP.x - center.x;
+        const dy = svgP.y - center.y;
+        const newAngleRad = Math.atan2(dy, dx);
+        
+        const next = [...points] as [Point, Point];
+        next[draggingIndex] = {
+            x: center.x + radius * Math.cos(newAngleRad),
+            y: center.y + radius * Math.sin(newAngleRad)
+        };
+        setPoints(next);
+    }, [draggingIndex, center, radius, points]);
+    
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        handleInteraction(e.clientX, e.clientY);
+    }, [handleInteraction]);
+
+    const handleTouchMove = useCallback((e: TouchEvent) => {
+        if (draggingIndex !== null) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    }, [draggingIndex, handleInteraction]);
+
+    useEffect(() => {
+        const handleMouseUp = () => setDraggingIndex(null);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleMouseUp);
+        };
+    }, [handleMouseMove, handleTouchMove]);
+
+    const minAng = Math.min(angleA, angleB);
+    const bisectorAngle = minAng + halfAngle;
+    
+    const describeArc = (r: number, start: number, end: number) => {
+        const startRad = (360 - start) * Math.PI / 180;
+        const endRad = (360 - end) * Math.PI / 180;
+        const p1 = { x: center.x + r * Math.cos(startRad), y: center.y + r * Math.sin(startRad) };
+        const p2 = { x: center.x + r * Math.cos(endRad), y: center.y + r * Math.sin(endRad) };
+        const largeArcFlag = Math.abs(end - start) > 180 ? "1" : "0";
+        const sweepFlag = end > start ? "0" : "1";
+        return `M ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${p2.x} ${p2.y}`;
+    }
+
+    return (
+        <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
+             <div className="flex-1 relative">
+                <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
+                    <path d={`M ${center.x} ${center.y} L ${points[0].x} ${points[0].y} A ${radius} ${radius} 0 ${totalAngle > 180 ? 1 : 0} ${angleB > angleA ? 0 : 1} ${points[1].x} ${points[1].y} Z`} fill={COLORS.aux} fillOpacity="0.15" />
+                    <line x1={center.x} y1={center.y} x2={points[0].x} y2={points[0].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
+                    <line x1={center.x} y1={center.y} x2={points[1].x} y2={points[1].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
+
+                    {showBisector && (
+                        <>
+                            <line x1={center.x} y1={center.y} 
+                                  x2={center.x + radius * Math.cos(bisectorAngle * Math.PI / 180)} 
+                                  y2={center.y - radius * Math.sin(bisectorAngle * Math.PI / 180)} 
+                                  stroke="#74a5c2" strokeWidth="3" strokeDasharray="8" />
+                            <path d={describeArc(40, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(46, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(40, bisectorAngle, Math.max(angleA, angleB))} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(46, bisectorAngle, Math.max(angleA, angleB))} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                        </>
+                    )}
+
+                    <circle cx={center.x} cy={center.y} r="8" fill={COLORS.text} />
+                    <text x={center.x} y={center.y + 35} fill={COLORS.text} textAnchor="middle" className="font-bold text-xl select-none">O</text>
+
+                    {points.map((p, i) => (
+                        <g 
+                            key={i} 
+                            onMouseDown={() => setDraggingIndex(i)} 
+                            onTouchStart={() => setDraggingIndex(i)}
+                            className="cursor-grab active:cursor-grabbing"
+                        >
+                            <circle cx={p.x} cy={p.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
+                            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="font-bold select-none pointer-events-none text-xs" fill={COLORS.main}>{i === 0 ? 'A' : 'B'}</text>
+                        </g>
+                    ))}
+                </svg>
+                
+                <div className="absolute top-6 left-0 right-0 flex justify-center pointer-events-none">
+                    <button 
+                        onClick={() => setShowBisector(!showBisector)} 
+                        className="pointer-events-auto px-10 py-3 font-bold rounded-2xl shadow-xl transition-all w-64 bg-[#ee6c4d] text-white hover:bg-[#d85c3d] hover:scale-105 active:scale-95"
+                    >
+                        {showBisector ? "隱藏角平分線" : "顯示角平分線"}
+                    </button>
+                </div>
+             </div>
+        </div>
+    );
+};
+
+const BasicConstructions: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
+    const [mode, setMode] = useState<ConstructionMode>('foot');
+    const tabs: {id: ConstructionMode, name: string}[] = [
+        { id: 'foot', name: '垂足' },
+        { id: 'bisector', name: '中垂線' },
+        { id: 'angle-bisector', name: '角平分線' }
+    ];
+
+    return (
+        <div className="w-full h-full flex flex-col bg-[#EEEEEE] select-none">
+            <div className="flex justify-center border-b border-[#98c1d9]/30 p-4 bg-[#3d5a80]/5 gap-4 select-none">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setMode(tab.id)} className={`px-8 py-3 font-bold rounded-2xl transition-all ${mode === tab.id ? 'bg-[#3d5a80] text-[#e0fbfc] shadow-lg' : 'text-[#3d5a80] hover:bg-[#98c1d9]/20'}`}>
+                        {tab.name}
+                    </button>
+                ))}
+            </div>
+            <div className="flex-grow select-none relative">
+                {mode === 'foot' && <PerpendicularFoot setInfo={setInfo} />}
+                {mode === 'bisector' && <PerpendicularBisector setInfo={setInfo} />}
+                {mode === 'angle-bisector' && <AngleBisector setInfo={setInfo} />}
+            </div>
+        </div>
+    );
+};
+
+export default BasicConstructions;
