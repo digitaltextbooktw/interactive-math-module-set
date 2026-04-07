@@ -15,13 +15,11 @@ export function useLayoutMode() {
             setIsLandscape(window.innerWidth >= 768 && window.innerWidth > window.innerHeight);
         };
         window.addEventListener('resize', update);
-        window.addEventListener('orientationchange', () => {
-            // orientationchange 後尺寸可能延遲更新，等一個 frame
-            setTimeout(update, 100);
-        });
+        const onOrientation = () => setTimeout(update, 100);
+        window.addEventListener('orientationchange', onOrientation);
         return () => {
             window.removeEventListener('resize', update);
-            window.removeEventListener('orientationchange', update);
+            window.removeEventListener('orientationchange', onOrientation);
         };
     }, []);
 

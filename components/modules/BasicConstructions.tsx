@@ -47,9 +47,10 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
         let newX = svgP.x;
         let newY = Math.min(svgP.y, lineY - 40);
 
-        // 接近 90° 時吸附
-        const snapAngle = Math.atan2(pointA.y - newY, newX - pointA.x) * 180 / Math.PI;
-        if (Math.abs(snapAngle - 90) < 5) {
+        // 接近垂直時吸附（用水平偏移比高度判斷，避免遠處難觸發）
+        const hDist = Math.abs(newX - pointA.x);
+        const vDist = pointA.y - newY;
+        if (vDist > 20 && hDist / vDist < Math.tan(5 * Math.PI / 180)) {
             newX = pointA.x;
         }
 
@@ -61,7 +62,10 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
     }, [handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (isDragging) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (isDragging) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [isDragging, handleInteraction]);
 
     const handleMouseUp = useCallback(() => setIsDragging(false), []);
@@ -261,7 +265,8 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     const getAngle = (p: Point) => Math.atan2(center.y - p.y, p.x - center.x) * 180 / Math.PI;
     const angleA = getAngle(points[0]);
     const angleB = getAngle(points[1]);
-    const totalAngle = Math.abs(angleA - angleB);
+    let totalAngle = Math.abs(angleA - angleB);
+    if (totalAngle > 180) totalAngle = 360 - totalAngle;
     const halfAngle = totalAngle / 2;
 
     useEffect(() => {
@@ -301,7 +306,10 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     }, [handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (draggingIndex !== null) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (draggingIndex !== null) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [draggingIndex, handleInteraction]);
 
     useEffect(() => {
@@ -318,8 +326,14 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
         };
     }, [handleMouseMove, handleTouchMove]);
 
-    const minAng = Math.min(angleA, angleB);
-    const bisectorAngle = minAng + halfAngle;
+    // 計算角平分線方向：取兩射線的角度平均（走較小弧）
+    let bisectorAngle: number;
+    {
+        let diff = angleB - angleA;
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+        bisectorAngle = angleA + diff / 2;
+    }
     
     const describeArc = (r: number, start: number, end: number) => {
         const startRad = (360 - start) * Math.PI / 180;
@@ -344,10 +358,10 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                                   x2={center.x + (radius + 40) * Math.cos(bisectorAngle * Math.PI / 180)}
                                   y2={center.y - (radius + 40) * Math.sin(bisectorAngle * Math.PI / 180)}
                                   stroke="#74a5c2" strokeWidth="3" strokeDasharray="8" />
-                            <path d={describeArc(40, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
-                            <path d={describeArc(46, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
-                            <path d={describeArc(40, bisectorAngle, Math.max(angleA, angleB))} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
-                            <path d={describeArc(46, bisectorAngle, Math.max(angleA, angleB))} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(40, angleA, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(46, angleA, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(40, bisectorAngle, angleB)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
+                            <path d={describeArc(46, bisectorAngle, angleB)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
                         </>
                     )}
 

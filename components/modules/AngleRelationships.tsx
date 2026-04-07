@@ -43,9 +43,13 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
 
     const handleInteraction = useCallback((clientX: number, clientY: number) => {
         if (!svgRef.current) return;
-        const svgRect = svgRef.current.getBoundingClientRect();
-        const dx = clientX - svgRect.left - (centerX * (svgRect.width / 500));
-        const dy = -(clientY - svgRect.top - (centerY * (svgRect.height / 340)));
+        const svg = svgRef.current;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+        const dx = svgP.x - centerX;
+        const dy = -(svgP.y - centerY);
 
         let newAngle = Math.atan2(Math.max(0, dy), dx) * (180 / Math.PI);
         if (newAngle < 0) newAngle = 0;
@@ -58,7 +62,10 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
     }, [isDragging, handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (isDragging) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (isDragging) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [isDragging, handleInteraction]);
 
     const handleMouseUp = useCallback(() => setIsDragging(false), []);

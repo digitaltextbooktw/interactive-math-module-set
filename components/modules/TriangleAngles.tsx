@@ -62,6 +62,7 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
         if (draggingIndex !== null) {
+            e.preventDefault();
             handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
         }
     }, [draggingIndex, handleInteraction]);

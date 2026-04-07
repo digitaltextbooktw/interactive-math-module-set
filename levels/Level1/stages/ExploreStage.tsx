@@ -123,7 +123,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
   const snapTo = useCallback((index: number) => {
     if (measuredRef.current[index] !== null) return;
     playSound('click');
-    const t = TRIANGLES[protRef.current === prot ? triIdx : triIdx]; // use current triIdx
+    const t = TRIANGLES[triIdx];
     const p1 = t.points[index];
     const nextIdx = t.baseEdges[index];
     const p2 = t.points[nextIdx];
@@ -378,7 +378,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
   ry = Math.max(30, Math.min(570, ry));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '15px 20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '15px 20px', position: 'relative' }}>
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 0 }}>
         {TRIANGLES.map((t, i) => (
@@ -567,7 +567,6 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
           )}
         </svg>
       </div>
-
 
       {/* All-done overlay (big center text) */}
       {allDoneOverlay && (

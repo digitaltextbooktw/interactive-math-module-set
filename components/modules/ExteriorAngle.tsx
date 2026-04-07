@@ -14,9 +14,10 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
 
     const calculateAngles = () => {
         const dist = (p1: Point, p2: Point) => Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+        const clamp = (v: number) => Math.max(-1, Math.min(1, v));
         const c_len = dist(A, B); const a_len = dist(B, C); const b_len = dist(A, C);
-        const angA = Math.acos((c_len**2 + b_len**2 - a_len**2) / (2 * c_len * b_len)) * 180 / Math.PI;
-        const angB = Math.acos((c_len**2 + a_len**2 - b_len**2) / (2 * c_len * a_len)) * 180 / Math.PI;
+        const angA = Math.acos(clamp((c_len**2 + b_len**2 - a_len**2) / (2 * c_len * b_len || 1))) * 180 / Math.PI;
+        const angB = Math.acos(clamp((c_len**2 + a_len**2 - b_len**2) / (2 * c_len * a_len || 1))) * 180 / Math.PI;
         return { A: Math.round(angA), B: Math.round(angB), Ext: Math.round(angA + angB) };
     };
 
@@ -33,7 +34,7 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
             concept: "三角形任一外角等於兩個不相鄰內角的和。",
             aiTip: "拖動 B 點改變三角形，外角 = 兩個遠內角的和！"
         });
-    }, [angles, setInfo]);
+    }, [angles.A, angles.B, angles.Ext, setInfo]);
 
     const handleInteraction = useCallback((clientX: number, clientY: number) => {
         if (draggingIndex === null || !svgRef.current) return;
@@ -56,7 +57,10 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     }, [handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (draggingIndex !== null) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (draggingIndex !== null) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [draggingIndex, handleInteraction]);
 
     const handleMouseUp = useCallback(() => setDraggingIndex(null), []);
