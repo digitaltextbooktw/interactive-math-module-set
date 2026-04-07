@@ -34,7 +34,7 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
                 { label: "內角和", value: `${totalAngle}°` }
             ],
             concept: `三角形內角和定理：任何三角形的三個內角總和恆等於 180°。`,
-            aiTip: "任意拖動頂點來改變三角形形狀。內角和始終不變。"
+            aiTip: "拖動三角形的頂點，觀察三個內角的和！"
         });
     }, [angleA, angleB, angleC, totalAngle, setInfo]);
 

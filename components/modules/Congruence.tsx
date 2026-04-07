@@ -82,7 +82,7 @@ const Congruence: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo
             title: "全等判定",
             data: [{ label: "判定性質", value: congruence }],
             concept: "透過比較三個元素，判斷兩個三角形是否完全相同。\n橘色部分代表你當前選擇的對應邊角。",
-            aiTip: "點擊左側三角形的邊（線段）或角（頂點）來選擇。系統將同步反映在右側並自動判定全等性質。"
+            aiTip: "點選左邊三角形的邊或角，右邊會同步標記！"
         });
     }, [congruence, setInfo]);
 

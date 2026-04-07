@@ -19,7 +19,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                 { label: "邊 c", value: sideC.toString() },
             ],
             concept: "三角形不等式定理：三角形任意兩邊之和大於第三邊。\n滿足此條件的三條線段才能封閉成一個三角形。",
-            aiTip: "拖動滑桿調整線段長度。點擊橘色按鈕進行驗證。"
+            aiTip: "拖動滑桿改變邊長，按按鈕看能不能組成三角形！"
         });
     }, [sideA, sideB, sideC, setInfo]);
 

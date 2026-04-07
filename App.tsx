@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useLayoutMode } from './utils/useLayoutMode';
 import type { Module, ModuleInfo } from './types';
 import {
     AngleBasics,
@@ -71,6 +72,7 @@ const App: React.FC = () => {
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [practiceMode, setPracticeMode] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const isLandscape = useLayoutMode();
 
     const handleSelectModule = (index: number) => {
         setSelectedModuleIndex(index);
@@ -176,7 +178,7 @@ const App: React.FC = () => {
                             <span className="text-xs font-medium">{topRow.id}</span>
                             {topRow.title}
                         </h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ gridAutoRows: '1fr' }}>
+                        <div className={`grid ${isLandscape ? 'grid-cols-4' : 'grid-cols-2'} gap-4`} style={{ gridAutoRows: '1fr' }}>
                             {topRow.moduleIds.map(id => (
                                 <div key={id} className="aspect-[4/3]">
                                     {renderCard(id, sectionColors[topRow.id])}
@@ -186,7 +188,7 @@ const App: React.FC = () => {
                     </div>
 
                     {/* 下排：3-2 ~ 3-5 各一個 */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className={`grid ${isLandscape ? 'grid-cols-4' : 'grid-cols-2'} gap-4`}>
                         {bottomRow.map(sec => (
                             <div key={sec.id}>
                                 <h2 className={`text-sm font-medium mb-2.5 flex items-center gap-2 truncate transition-opacity duration-300 ${isSectionVisible(sec.id) ? '' : 'opacity-20'}`} style={{ color: sectionColors[sec.id] }}>
@@ -250,7 +252,7 @@ const App: React.FC = () => {
     // --- Practice mode: full-width ---
     if (practiceMode && practice) {
         return (
-            <div className="bg-[#293241] min-h-[100dvh] lg:h-[100dvh] flex flex-col p-4 sm:p-5 text-[#293241] overflow-y-auto lg:overflow-hidden">
+            <div className={`bg-[#293241] min-h-[100dvh] ${isLandscape ? 'h-[100dvh] overflow-hidden' : 'overflow-y-auto'} flex flex-col p-4 sm:p-5 text-[#293241]`}>
                 {renderTopBar()}
                 <main className="flex-1 max-w-7xl mx-auto w-full min-h-0">
                     <section className="bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative h-full border border-white/20">
@@ -267,23 +269,23 @@ const App: React.FC = () => {
 
     // --- Sandbox mode: two-column layout ---
     return (
-        <div className="bg-[#293241] min-h-[100dvh] lg:h-[100dvh] flex flex-col p-4 sm:p-5 text-[#293241] overflow-y-auto lg:overflow-hidden">
+        <div className={`bg-[#293241] min-h-[100dvh] ${isLandscape ? 'h-[100dvh] overflow-hidden' : 'overflow-y-auto'} flex flex-col p-4 sm:p-5 text-[#293241]`}>
 
             {/* 頂部工具列：返回 + 標題 + 模式切換 */}
             {renderTopBar()}
 
             {/* 主要內容區域 */}
-            <main className="flex-1 flex flex-col lg:flex-row gap-4 max-w-7xl mx-auto w-full min-h-0">
+            <main className={`flex-1 flex ${isLandscape ? 'flex-row' : 'flex-col'} gap-4 max-w-7xl mx-auto w-full min-h-0`}>
 
-                {/* 左側：數學模組互動區（較矮） */}
-                <div className="flex-[60] flex flex-col min-h-[320px] lg:min-h-0">
-                    <section className="bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative flex-1 border border-white/20 lg:max-h-[calc(100vh-120px)]">
+                {/* 左側：數學模組互動區 */}
+                <div className={`flex-[60] flex flex-col ${isLandscape ? '' : 'min-h-[320px]'}`}>
+                    <section className={`bg-[#EEEEEE] rounded-[1.5rem] shadow-xl overflow-hidden relative flex-1 border border-white/20 ${isLandscape ? 'max-h-[calc(100vh-120px)]' : ''}`}>
                         <CurrentModuleComponent key={modules[selectedModuleIndex].id} setInfo={setCurrentInfo} />
                     </section>
                 </div>
 
                 {/* 右側：側邊資訊欄 */}
-                <aside className="flex-[40] flex flex-col gap-4 lg:max-w-[380px] min-h-0 relative z-[55]">
+                <aside className={`flex-[40] flex flex-col gap-4 ${isLandscape ? 'max-w-[380px]' : ''} min-h-0 relative z-[55]`}>
 
                     {/* 數據看板 */}
                     <div className="bg-[#EEEEEE] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] shrink-0">
@@ -297,9 +299,9 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 概念與提示區域：桌面模式下內部捲動 */}
-                    <div className="flex-1 flex flex-col gap-4 lg:overflow-y-auto pr-0 lg:pr-1 min-h-0">
-                        <div className="bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md shrink-0 lg:shrink">
+                    {/* 概念與提示區域 */}
+                    <div className={`flex-1 flex flex-col gap-4 ${isLandscape ? 'overflow-y-auto pr-1' : 'pr-0'} min-h-0`}>
+                        <div className={`bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md ${isLandscape ? 'shrink' : 'shrink-0'}`}>
                             <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
                                 <BookIcon className="w-5 h-5" />
                                 <span className="font-black text-xl">幾何概念</span>
@@ -309,7 +311,7 @@ const App: React.FC = () => {
                             </p>
                         </div>
 
-                        <div className="bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md shrink-0 lg:shrink mb-4 lg:mb-0">
+                        <div className={`bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md ${isLandscape ? 'shrink' : 'shrink-0 mb-4'}`}>
                             <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
                                 <LightbulbIcon className="w-5 h-5" />
                                 <span className="font-black text-xl">操作提示</span>

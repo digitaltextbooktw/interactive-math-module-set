@@ -27,7 +27,7 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
                 { label: "總和", value: `180°` }
             ],
             concept: `互補：當兩角之和為 180° 時，稱這兩個角互為補角。\n圖中直線 L 與射線 M 構成了一組鄰補角。`,
-            aiTip: "拖動橘色控制點。觀察兩側角度加總始終為 180°。"
+            aiTip: "拖動橘色點，看看兩個角怎麼互補！"
         });
     }, [angle1, angle2, setInfo]);
     

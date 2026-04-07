@@ -28,7 +28,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
                 { label: "面積", value: area.toString() }
             ],
             concept: `三角形面積公式：(底 × 高) / 2\n這可以看作是將兩個全等的三角形拼合後所成平行四邊形的一半。`,
-            aiTip: "使用下方按鈕逐步探索。橘色線條強調當前計算中使用的關鍵維度。"
+            aiTip: "按下方按鈕，一步步看面積怎麼算！"
         });
     }, [base, height, area, setInfo]);
     

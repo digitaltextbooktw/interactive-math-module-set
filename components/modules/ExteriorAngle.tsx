@@ -31,7 +31,7 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                 { label: "外角 ∠C", value: `${angles.Ext}°` }
             ],
             concept: "三角形外角定理：三角形任一外角的度數等於兩個不相鄰內角的和。\n圖中橘色標示的為外角部分。",
-            aiTip: "拖動橘色頂點 B 改變形狀。注意 ∠A + ∠B 永遠等於外側橘色區域的角度。"
+            aiTip: "拖動 B 點改變三角形，外角 = 兩個遠內角的和！"
         });
     }, [angles, setInfo]);
 

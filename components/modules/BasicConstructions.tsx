@@ -32,7 +32,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
                 ? [{ label: "關係", value: "垂直 (⊥)" }]
                 : [{ label: "夾角", value: `${angleDeg}°` }],
             concept: "從直線外的一點向該直線作垂直線，兩者的交點即稱為垂足。",
-            aiTip: "拖動橘色點 B 使 AB 與 L 垂直。當達到 90° 時，會出現垂直符號。"
+            aiTip: "拖動 B 點，試著讓 AB 和直線 L 垂直！"
         });
     }, [angleDeg, isPerpendicular, setInfo]);
 
@@ -140,7 +140,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                 { label: "性質", value: "垂直且平分" }
             ],
             concept: "通過線段中點且垂直於該線段的直線稱為中垂線。",
-            aiTip: "拖動端點 A 或 B。點擊畫布上方的按鈕顯示中垂線。"
+            aiTip: "拖動 A 或 B 改變線段，按按鈕顯示中垂線！"
         });
     }, [length, setInfo]);
 
@@ -266,7 +266,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                 { label: "平分角", value: `${halfAngle.toFixed(1)}°` }
             ],
             concept: "將一個角分成兩個相等角度的射線稱為角平分線。",
-            aiTip: "拖動 A 或 B 改變角度。使用上方按鈕確認兩邊角度相等。"
+            aiTip: "拖動 A 或 B 改變角度，按按鈕看角平分線！"
         });
     }, [totalAngle, halfAngle, setInfo]);
 

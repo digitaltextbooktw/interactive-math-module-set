@@ -11,8 +11,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
     const [angle, setAngle] = useState(45);
     const [isDragging, setIsDragging] = useState(false);
 
-    // 將中心點左移 (從 300 改為 220)，使視覺重心靠左
-    const centerX = 220;
+    const centerX = 300;
     const centerY = 200;
     const radius = 130;
 
@@ -37,7 +36,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                 { label: "類型", value: angleType.name }
             ],
             concept: `● 銳角：0° < θ < 90°\n● 直角：θ = 90°\n● 鈍角：90° < θ < 180°\n● 平角：θ = 180°`,
-            aiTip: "拖曳橘色的控制點 A。頂點 O 為圓心，點 B 為固定位置。"
+            aiTip: "拖動橘色的 A 點，看看角度怎麼變！"
         });
     }, [angle, angleType.name, setInfo]);
 
@@ -109,49 +108,68 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
     };
 
     return (
-        <div className="w-full h-full flex flex-row bg-[#EEEEEE] select-none p-4 sm:p-6 overflow-hidden">
-            {/* 左側主要旋轉區域 */}
-            <div className="flex-1 relative overflow-visible h-full">
-                <svg 
+        <div className="w-full h-full flex flex-col bg-[#EEEEEE] select-none p-4 sm:p-6 overflow-hidden">
+            {/* 主要旋轉區域 */}
+            <div className="flex-1 relative overflow-visible min-h-0">
+                <svg
                     ref={svgRef}
-                    viewBox="0 0 600 400" 
+                    viewBox="0 0 600 400"
                     className="w-full h-full select-none overflow-visible"
                     preserveAspectRatio="xMidYMid meet"
                 >
                     {drawSector()}
 
+                    {/* 扇形內度數標籤 */}
+                    {angle > 0 && (() => {
+                        const midRad = (angle / 2) * Math.PI / 180;
+                        const labelDist = Math.min(radius * 0.45, 60);
+                        const lx = centerX + labelDist * Math.cos(-midRad);
+                        const ly = centerY + labelDist * Math.sin(-midRad);
+                        return (
+                            <text
+                                x={lx} y={ly}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill="#3d5a80"
+                                className="font-black select-none pointer-events-none" style={{ fontSize: '28px' }}
+                            >
+                                {angle}°
+                            </text>
+                        );
+                    })()}
+
                     {/* 基準線 OB */}
-                    <line 
-                        x1={centerX} y1={centerY} 
-                        x2={centerX + radius + 40} y2={centerY} 
-                        stroke="#3d5a80" strokeWidth="4" strokeLinecap="round" 
+                    <line
+                        x1={centerX} y1={centerY}
+                        x2={centerX + radius + 40} y2={centerY}
+                        stroke="#3d5a80" strokeWidth="4" strokeLinecap="round"
                     />
                     <text x={centerX + radius + 65} y={centerY + 5} fill="#3d5a80" className="font-black text-2xl select-none">B</text>
 
                     {/* 動態線 OA */}
-                    <line 
-                        x1={centerX} y1={centerY} 
-                        x2={ax} y2={ay} 
-                        stroke="#ee6c4d" strokeWidth="6" strokeLinecap="round" 
+                    <line
+                        x1={centerX} y1={centerY}
+                        x2={ax} y2={ay}
+                        stroke="#ee6c4d" strokeWidth="6" strokeLinecap="round"
                     />
-                    
+
                     {/* 頂點 O */}
                     <circle cx={centerX} cy={centerY} r="8" fill="#293241" />
                     <text x={centerX} y={centerY + 40} textAnchor="middle" fill="#293241" className="font-black text-2xl select-none">O</text>
 
                     {/* 控制點 A */}
-                    <g 
-                        className="cursor-grab active:cursor-grabbing" 
+                    <g
+                        className="cursor-grab active:cursor-grabbing"
                         onMouseDown={() => setIsDragging(true)}
                         onTouchStart={() => setIsDragging(true)}
                     >
                         <circle cx={ax} cy={ay} r="20" fill="white" stroke="#ee6c4d" strokeWidth="4" className="shadow-lg" />
-                        <text 
-                            x={ax} 
-                            y={ay} 
-                            textAnchor="middle" 
+                        <text
+                            x={ax}
+                            y={ay}
+                            textAnchor="middle"
                             dominantBaseline="middle"
-                            fill="#ee6c4d" 
+                            fill="#ee6c4d"
                             className="font-black text-xl select-none pointer-events-none"
                         >
                             A
@@ -159,21 +177,17 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                     </g>
                 </svg>
 
-                {/* 角度浮動標籤 */}
-                <div className="absolute top-2 left-2 bg-[#293241] text-[#e0fbfc] text-sm sm:text-base px-4 py-2 rounded-xl shadow-lg font-black select-none border border-[#ee6c4d]/30">
-                    ∠AOB = {angle}°
-                </div>
             </div>
-            
-            {/* 右側快速控制欄 */}
-            <div className="w-24 sm:w-32 flex flex-col justify-center gap-3 sm:gap-4 pl-4 sm:pl-6 border-l border-[#3d5a80]/10 shrink-0">
+
+            {/* 下排快速控制列 */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 pt-3 border-t border-[#3d5a80]/10 shrink-0">
                 {[45, 90, 135, 180].map(val => (
                     <button
                         key={val}
                         onClick={() => setAngle(val)}
-                        className={`py-3 sm:py-4 rounded-2xl text-lg sm:text-xl font-black transition-all border-2 ${
-                            angle === val 
-                            ? 'bg-[#ee6c4d] border-[#ee6c4d] text-white shadow-lg scale-105' 
+                        className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-base sm:text-lg font-black transition-all border-2 ${
+                            angle === val
+                            ? 'bg-[#ee6c4d] border-[#ee6c4d] text-white shadow-lg scale-105'
                             : 'bg-white border-[#98c1d9]/50 text-[#3d5a80] hover:border-[#98c1d9] active:scale-95 shadow-sm'
                         }`}
                     >
@@ -182,7 +196,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                 ))}
                 <button
                     onClick={() => setAngle(0)}
-                    className="mt-2 py-2 text-sm font-bold text-[#3d5a80]/60 hover:text-[#ee6c4d] transition-colors"
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 text-sm font-bold text-[#3d5a80]/60 hover:text-[#ee6c4d] transition-colors"
                 >
                     重設 0°
                 </button>
