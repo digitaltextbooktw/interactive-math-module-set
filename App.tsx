@@ -60,10 +60,6 @@ const sectionColors: Record<string, string> = {
     '3-5': '#ec5c40',  // 最深
 };
 
-const moduleIconMap: Record<string, string> = {
-    'angle-basics': '📐', 'angle-relationships': '🔗', 'triangle-angles': '🔺', 'exterior-angle': '🔄',
-    'basic-constructions': '✏️', 'congruence': '🟰', 'area-calculation': '📏', 'triangle-inequality': '📊',
-};
 
 const App: React.FC = () => {
     const [selectedModuleIndex, setSelectedModuleIndex] = useState<number | null>(null);
@@ -132,13 +128,10 @@ const App: React.FC = () => {
             <button key={id} onClick={() => handleSelectModule(index)}
                 className={`group bg-[#EEEEEE] hover:bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-1.5 text-center w-full h-full px-2 py-3 ${visible ? '' : 'opacity-20 pointer-events-none'}`}
             >
-                <span className="text-3xl group-hover:scale-110 transition-transform duration-300">
-                    {moduleIconMap[id]}
-                </span>
                 <span className="text-lg font-black text-[#293241] leading-tight">
                     {m.title}
                 </span>
-                <div className="flex flex-wrap justify-center gap-1 mt-0.5">
+                <div className="flex flex-wrap justify-center gap-1 mt-2">
                     {m.keywords.slice(0, 2).map(k => (
                         <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#3d5a80]/15 text-[#3d5a80] font-black border border-[#3d5a80]/20">
                             #{k}

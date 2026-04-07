@@ -32,7 +32,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
                 ? [{ label: "關係", value: "垂直 (⊥)" }]
                 : [{ label: "夾角", value: `${angleDeg}°` }],
             concept: "從直線外一點向直線作垂直線，垂線與直線的交點稱為垂足。",
-            aiTip: "拖動 B 點，試著讓 AB 和直線 L 垂直！"
+            aiTip: "拖動點 B，試著讓 AB 和直線 L 垂直！"
         });
     }, [angleDeg, isPerpendicular, setInfo]);
 
@@ -94,7 +94,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
             )}
             
             <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="3" />
-            <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-2xl select-none pointer-events-none">A</text>
+            <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-lg select-none pointer-events-none">A</text>
 
             <g
                 onMouseDown={() => setIsDragging(true)}
@@ -142,11 +142,11 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
         setInfo({
             title: "基本作圖 - 中垂線",
             data: [
-                { label: "AB 長度", value: `${(length / 10).toFixed(1)} 單位` },
+                { label: "AB 長度", value: `${Math.round(length / 10)}` },
                 { label: "性質", value: "垂直且平分" }
             ],
-            concept: "通過線段中點、且與線段垂直的直線，稱為中垂線。中垂線上的任一點到線段兩端等距。",
-            aiTip: "拖動 A 或 B 改變線段，按按鈕顯示中垂線！"
+            concept: "通過線段中點 M、且與線段垂直的直線，稱為中垂線。中垂線上的任一點到線段兩端等距。",
+            aiTip: "拖動點 A 或點 B 改變線段，按按鈕顯示中垂線！"
         });
     }, [length, setInfo]);
 
@@ -199,22 +199,22 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                                   x2={midpoint.x - perpDx * bisectorHalfLength} y2={midpoint.y - perpDy * bisectorHalfLength} 
                                   stroke={COLORS.highlight} strokeWidth="3" strokeDasharray="8" />
                             <path d={`M ${raP1x} ${raP1y} L ${raP2x} ${raP2y} L ${raP3x} ${raP3y}`} fill="none" stroke={COLORS.highlight} strokeWidth="2" />
-                            
-                            <text 
-                                x={midpoint.x + perpDx * (bisectorHalfLength + 25)} 
-                                y={midpoint.y + perpDy * (bisectorHalfLength + 25)} 
-                                fill={COLORS.highlight} 
-                                className="font-bold text-xl select-none"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                            >
-                                L
-                            </text>
+
+                            {/* 等長標記 */}
+                            {(() => {
+                                const tickLen = 8;
+                                const mA = { x: (pointA.x + midpoint.x) / 2, y: (pointA.y + midpoint.y) / 2 };
+                                const mB = { x: (pointB.x + midpoint.x) / 2, y: (pointB.y + midpoint.y) / 2 };
+                                return [mA, mB].map((m, i) => (
+                                    <line key={i} x1={m.x + perpDx * tickLen} y1={m.y + perpDy * tickLen} x2={m.x - perpDx * tickLen} y2={m.y - perpDy * tickLen} stroke={COLORS.main} strokeWidth="2.5" strokeLinecap="round" />
+                                ));
+                            })()}
+
                         </>
                     )}
 
                     <circle cx={midpoint.x} cy={midpoint.y} r="6" fill={COLORS.highlight} />
-                    <text x={midpoint.x + 10 * perpDx} y={midpoint.y - 10 * perpDy - 5} fill={COLORS.text} className="font-bold text-sm select-none">M</text>
+                    <text x={midpoint.x + 12 * perpDx} y={midpoint.y - 12 * perpDy - 5} fill={COLORS.text} className="font-black text-lg select-none">M</text>
 
                     <g
                         onMouseDown={() => setDraggingPoint('A')}
@@ -222,7 +222,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                         className="cursor-grab active:cursor-grabbing"
                     >
                         <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
-                        <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-2xl select-none pointer-events-none" fill={COLORS.highlight}>A</text>
+                        <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-lg select-none pointer-events-none" fill={COLORS.highlight}>A</text>
                     </g>
                     <g
                         onMouseDown={() => setDraggingPoint('B')}
@@ -230,7 +230,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                         className="cursor-grab active:cursor-grabbing"
                     >
                         <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
-                        <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-2xl select-none pointer-events-none" fill={COLORS.highlight}>B</text>
+                        <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-lg select-none pointer-events-none" fill={COLORS.highlight}>B</text>
                     </g>
                 </svg>
                 
@@ -249,7 +249,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
 
 const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
     const svgRef = useRef<SVGSVGElement>(null);
-    const center: Point = { x: 250, y: 220 };
+    const center: Point = { x: 250, y: 250 };
     const radius = 130;
     const [points, setPoints] = useState<[Point, Point]>([
         { x: center.x + radius, y: center.y },
@@ -268,11 +268,11 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
         setInfo({
             title: "基本作圖 - 角平分線",
             data: [
-                { label: "∠AOB", value: `${totalAngle.toFixed(1)}°` },
-                { label: "平分角", value: `${halfAngle.toFixed(1)}°` }
+                { label: "∠AOB", value: `${Math.round(totalAngle)}°` },
+                { label: "平分角", value: `${Math.round(halfAngle)}°` }
             ],
             concept: "從角的頂點出發，將角平分成兩個相等部分的射線，稱為角平分線。",
-            aiTip: "拖動 A 或 B 改變角度，按按鈕看角平分線！"
+            aiTip: "拖動點 A 或點 B 改變角度，按按鈕看角平分線！"
         });
     }, [totalAngle, halfAngle, setInfo]);
 
@@ -335,15 +335,14 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
                 <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
-                    <path d={`M ${center.x} ${center.y} L ${points[0].x} ${points[0].y} A ${radius} ${radius} 0 ${totalAngle > 180 ? 1 : 0} ${angleB > angleA ? 0 : 1} ${points[1].x} ${points[1].y} Z`} fill={COLORS.aux} fillOpacity="0.2" stroke={COLORS.aux} strokeWidth="1" />
                     <line x1={center.x} y1={center.y} x2={points[0].x} y2={points[0].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
                     <line x1={center.x} y1={center.y} x2={points[1].x} y2={points[1].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 
                     {showBisector && (
                         <>
-                            <line x1={center.x} y1={center.y} 
-                                  x2={center.x + radius * Math.cos(bisectorAngle * Math.PI / 180)} 
-                                  y2={center.y - radius * Math.sin(bisectorAngle * Math.PI / 180)} 
+                            <line x1={center.x} y1={center.y}
+                                  x2={center.x + (radius + 40) * Math.cos(bisectorAngle * Math.PI / 180)}
+                                  y2={center.y - (radius + 40) * Math.sin(bisectorAngle * Math.PI / 180)}
                                   stroke="#74a5c2" strokeWidth="3" strokeDasharray="8" />
                             <path d={describeArc(40, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
                             <path d={describeArc(46, minAng, bisectorAngle)} fill="none" stroke={COLORS.highlight} strokeWidth="2.5" />
@@ -353,7 +352,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                     )}
 
                     <circle cx={center.x} cy={center.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="3" />
-                    <text x={center.x} y={center.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-2xl select-none pointer-events-none">O</text>
+                    <text x={center.x} y={center.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-lg select-none pointer-events-none">O</text>
 
                     {points.map((p, i) => (
                         <g
