@@ -1,20 +1,46 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 互動式幾何數學模組集
 
-# Run and deploy your AI Studio app
+國中數學第三章「三角形的基本性質」互動教學模組，以 SVG 互動圖形搭配逐步引導，讓學生透過拖曳、量測、觀察來理解幾何概念。
 
-This contains everything you need to run your app locally.
+## 模組列表
 
-View your app in AI Studio: https://ai.studio/apps/2668d9fa-aedf-46fa-be55-d6a3fbae9576
+| 章節 | 模組 | 互動方式 |
+|------|------|----------|
+| 3-1 內角與外角 | 角的基本認識 | 拖曳旋轉觀察角度 |
+| | 角的關係 | 拖曳觀察補角互補 |
+| | 三角形的角 | 拖曳頂點驗證內角和 180° |
+| | 外角關係 | 拖曳觀察外角 = 兩遠內角之和 |
+| 3-2 基本的尺規作圖 | 垂線 / 中垂線 / 角平分線 | 拖曳作圖並吸附 |
+| 3-3 三角形的全等性質 | 全等判定 | 選取邊角驗證 SSS/SAS/ASA/AAS |
+| 3-4 中垂線與角平分線性質 | 面積計算 | 逐步動畫展示底 x 高 / 2 |
+| 3-5 三角形的邊角關係 | 邊長關係 | 滑桿調整邊長驗證三角不等式 |
 
-## Run Locally
+部分模組附有**練習模式**（操作探索 + 概念檢核）。
 
-**Prerequisites:**  Node.js
+## 快速開始
 
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 技術棧
+
+- React 19 + TypeScript + Vite
+- Tailwind CSS (CDN)
+- 字體：Zen Maru Gothic（主）、Nunito（數字/英文）
+- 純 SVG 互動圖形，支援滑鼠與觸控
+
+## 專案結構
+
+```
+App.tsx                  # 首頁路由、模組頁面、練習模式
+components/modules/      # 各幾何互動模組
+components/practice/     # 練習模式外殼
+levels/                  # 練習關卡 (Level1: 三角形的角, Level2: 外角關係)
+utils/                   # 工具函式 (音效、排版切換)
+```
+
+## License
+
+MIT
