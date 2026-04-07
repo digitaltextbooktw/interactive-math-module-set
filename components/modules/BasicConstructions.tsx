@@ -31,7 +31,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
             data: isPerpendicular
                 ? [{ label: "關係", value: "垂直 (⊥)" }]
                 : [{ label: "夾角", value: `${angleDeg}°` }],
-            concept: "從直線外的一點向該直線作垂直線，兩者的交點即稱為垂足。",
+            concept: "從直線外一點向直線作垂直線，垂線與直線的交點稱為垂足。",
             aiTip: "拖動 B 點，試著讓 AB 和直線 L 垂直！"
         });
     }, [angleDeg, isPerpendicular, setInfo]);
@@ -44,10 +44,16 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
         pt.y = clientY;
         const svgP = pt.matrixTransform(svg.getScreenCTM()!.inverse());
         
-        setPointB({ 
-            x: svgP.x, 
-            y: Math.min(svgP.y, lineY - 40)
-        });
+        let newX = svgP.x;
+        let newY = Math.min(svgP.y, lineY - 40);
+
+        // 接近 90° 時吸附
+        const snapAngle = Math.atan2(pointA.y - newY, newX - pointA.x) * 180 / Math.PI;
+        if (Math.abs(snapAngle - 90) < 5) {
+            newX = pointA.x;
+        }
+
+        setPointB({ x: newX, y: newY });
     }, [isDragging, lineY]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -82,21 +88,21 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
 
             {isPerpendicular && (
                 <g className="select-none">
-                    <path d={`M ${pointA.x} ${pointA.y - 25} L ${pointA.x + 25} ${pointA.y - 25} L ${pointA.x + 25} ${pointA.y}`} fill="none" stroke={COLORS.highlight} strokeWidth="2" />
-                    <text x={pointA.x + 30} y={pointA.y - 35} fill={COLORS.highlight} className="font-bold text-base select-none">A 為垂足</text>
+                    <path d={`M ${pointA.x} ${pointA.y - 35} L ${pointA.x + 35} ${pointA.y - 35} L ${pointA.x + 35} ${pointA.y}`} fill="none" stroke={COLORS.highlight} strokeWidth="3" />
+                    <text x={pointA.x + 42} y={pointA.y - 45} fill={COLORS.highlight} className="font-black text-xl select-none">A 為垂足</text>
                 </g>
             )}
             
-            <circle cx={pointA.x} cy={pointA.y} r="6" fill={COLORS.text} />
-            <text x={pointA.x - 20} y={pointA.y + 25} fill={COLORS.text} className="font-bold select-none">A</text>
-            
-            <g 
-                onMouseDown={() => setIsDragging(true)} 
+            <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="3" />
+            <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-2xl select-none pointer-events-none">A</text>
+
+            <g
+                onMouseDown={() => setIsDragging(true)}
                 onTouchStart={() => setIsDragging(true)}
                 className="cursor-grab active:cursor-grabbing"
             >
-                <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="4" />
-                <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" className="font-bold select-none pointer-events-none text-xs" fill={COLORS.highlight}>B</text>
+                <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
+                <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-2xl" fill={COLORS.highlight}>B</text>
             </g>
         </svg>
     );
@@ -139,7 +145,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                 { label: "AB 長度", value: `${(length / 10).toFixed(1)} 單位` },
                 { label: "性質", value: "垂直且平分" }
             ],
-            concept: "通過線段中點且垂直於該線段的直線稱為中垂線。",
+            concept: "通過線段中點、且與線段垂直的直線，稱為中垂線。中垂線上的任一點到線段兩端等距。",
             aiTip: "拖動 A 或 B 改變線段，按按鈕顯示中垂線！"
         });
     }, [length, setInfo]);
@@ -210,21 +216,21 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
                     <circle cx={midpoint.x} cy={midpoint.y} r="6" fill={COLORS.highlight} />
                     <text x={midpoint.x + 10 * perpDx} y={midpoint.y - 10 * perpDy - 5} fill={COLORS.text} className="font-bold text-sm select-none">M</text>
 
-                    <g 
-                        onMouseDown={() => setDraggingPoint('A')} 
+                    <g
+                        onMouseDown={() => setDraggingPoint('A')}
                         onTouchStart={() => setDraggingPoint('A')}
                         className="cursor-grab active:cursor-grabbing"
                     >
-                        <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
-                        <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" className="font-bold text-xs select-none pointer-events-none" fill={COLORS.main}>A</text>
+                        <circle cx={pointA.x} cy={pointA.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
+                        <text x={pointA.x} y={pointA.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-2xl select-none pointer-events-none" fill={COLORS.highlight}>A</text>
                     </g>
-                    <g 
-                        onMouseDown={() => setDraggingPoint('B')} 
+                    <g
+                        onMouseDown={() => setDraggingPoint('B')}
                         onTouchStart={() => setDraggingPoint('B')}
                         className="cursor-grab active:cursor-grabbing"
                     >
-                        <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
-                        <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" className="font-bold text-xs select-none pointer-events-none" fill={COLORS.main}>B</text>
+                        <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
+                        <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black text-2xl select-none pointer-events-none" fill={COLORS.highlight}>B</text>
                     </g>
                 </svg>
                 
@@ -265,7 +271,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                 { label: "∠AOB", value: `${totalAngle.toFixed(1)}°` },
                 { label: "平分角", value: `${halfAngle.toFixed(1)}°` }
             ],
-            concept: "將一個角分成兩個相等角度的射線稱為角平分線。",
+            concept: "從角的頂點出發，將角平分成兩個相等部分的射線，稱為角平分線。",
             aiTip: "拖動 A 或 B 改變角度，按按鈕看角平分線！"
         });
     }, [totalAngle, halfAngle, setInfo]);
@@ -329,7 +335,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
                 <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
-                    <path d={`M ${center.x} ${center.y} L ${points[0].x} ${points[0].y} A ${radius} ${radius} 0 ${totalAngle > 180 ? 1 : 0} ${angleB > angleA ? 0 : 1} ${points[1].x} ${points[1].y} Z`} fill={COLORS.aux} fillOpacity="0.15" />
+                    <path d={`M ${center.x} ${center.y} L ${points[0].x} ${points[0].y} A ${radius} ${radius} 0 ${totalAngle > 180 ? 1 : 0} ${angleB > angleA ? 0 : 1} ${points[1].x} ${points[1].y} Z`} fill={COLORS.aux} fillOpacity="0.2" stroke={COLORS.aux} strokeWidth="1" />
                     <line x1={center.x} y1={center.y} x2={points[0].x} y2={points[0].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
                     <line x1={center.x} y1={center.y} x2={points[1].x} y2={points[1].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 
@@ -346,18 +352,18 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                         </>
                     )}
 
-                    <circle cx={center.x} cy={center.y} r="8" fill={COLORS.text} />
-                    <text x={center.x} y={center.y + 35} fill={COLORS.text} textAnchor="middle" className="font-bold text-xl select-none">O</text>
+                    <circle cx={center.x} cy={center.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="3" />
+                    <text x={center.x} y={center.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill={COLORS.main} className="font-black text-2xl select-none pointer-events-none">O</text>
 
                     {points.map((p, i) => (
-                        <g 
-                            key={i} 
-                            onMouseDown={() => setDraggingIndex(i)} 
+                        <g
+                            key={i}
+                            onMouseDown={() => setDraggingIndex(i)}
                             onTouchStart={() => setDraggingIndex(i)}
                             className="cursor-grab active:cursor-grabbing"
                         >
-                            <circle cx={p.x} cy={p.y} r="16" fill="white" stroke={COLORS.main} strokeWidth="4" />
-                            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="font-bold select-none pointer-events-none text-xs" fill={COLORS.main}>{i === 0 ? 'A' : 'B'}</text>
+                            <circle cx={p.x} cy={p.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
+                            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-2xl" fill={COLORS.highlight}>{i === 0 ? 'A' : 'B'}</text>
                         </g>
                     ))}
                 </svg>

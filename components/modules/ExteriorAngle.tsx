@@ -30,7 +30,7 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                 { label: "∠B", value: `${angles.B}°` },
                 { label: "外角 ∠C", value: `${angles.Ext}°` }
             ],
-            concept: "三角形外角定理：三角形任一外角的度數等於兩個不相鄰內角的和。\n圖中橘色標示的為外角部分。",
+            concept: "三角形任一外角等於兩個不相鄰內角的和。",
             aiTip: "拖動 B 點改變三角形，外角 = 兩個遠內角的和！"
         });
     }, [angles, setInfo]);
@@ -88,23 +88,23 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-[#EEEEEE] select-none">
             <svg ref={svgRef} width="100%" height="320" viewBox="0 0 500 320" className="overflow-visible select-none">
-                <line x1={A.x} y1={A.y} x2={D.x} y2={D.y} stroke="#3d5a80" strokeWidth="4" />
-                <polygon points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" />
-                <path d={drawSector(A, C, B, 45)} fill="#98c1d9" fillOpacity="0.4" stroke="#3d5a80" strokeWidth="1" />
-                <path d={drawSector(B, A, C, 45)} fill="#98c1d9" fillOpacity="0.4" stroke="#3d5a80" strokeWidth="1" />
-                <path d={drawSector(C, D, B, 50)} fill="#ee6c4d" fillOpacity="0.6" stroke="#ee6c4d" strokeWidth="2" />
-                <circle 
-                    cx={B.x} cy={B.y} r="14" fill="white" stroke="#ee6c4d" strokeWidth="4" 
-                    onMouseDown={() => setDraggingIndex(2)} 
+                <path d={drawSector(A, C, B, 45)} fill="#98c1d9" fillOpacity="0.2" stroke="#98c1d9" strokeWidth="1" />
+                <path d={drawSector(B, A, C, 45)} fill="#98c1d9" fillOpacity="0.2" stroke="#98c1d9" strokeWidth="1" />
+                <path d={drawSector(C, D, B, 50)} fill="#ee6c4d" fillOpacity="0.3" stroke="#ee6c4d" strokeWidth="2" />
+                <line x1={A.x} y1={A.y} x2={D.x} y2={D.y} stroke="#3d5a80" strokeWidth="4" strokeLinecap="round" />
+                <polygon points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
+                <circle
+                    cx={B.x} cy={B.y} r="20" fill="white" stroke="#ee6c4d" strokeWidth="4"
+                    onMouseDown={() => setDraggingIndex(2)}
                     onTouchStart={() => setDraggingIndex(2)}
-                    className="cursor-grab active:cursor-grabbing shadow-xl" 
+                    className="cursor-grab active:cursor-grabbing shadow-xl"
                 />
-                <text x={B.x} y={B.y} textAnchor="middle" dominantBaseline="middle" fill="#ee6c4d" className="font-black text-xs select-none pointer-events-none">B</text>
-                <text x={A.x - 20} y={A.y + 5} fill="#3d5a80" className="font-black select-none">A</text>
-                <text x={C.x} y={C.y + 30} fill="#3d5a80" className="font-black select-none" textAnchor="middle">C</text>
-                <text x={A.x + 55} y={A.y - 10} fill="#3d5a80" className="font-bold text-lg select-none">{angles.A}°</text>
-                <text x={B.x} y={B.y - 30} textAnchor="middle" fill="#3d5a80" className="font-bold text-lg select-none">{angles.B}°</text>
-                <text x={C.x + 60} y={C.y - 15} fill="#ee6c4d" className="font-black text-2xl select-none">{angles.Ext}°</text>
+                <text x={B.x} y={B.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill="#ee6c4d" className="font-black text-2xl select-none pointer-events-none">B</text>
+                <text x={A.x - 30} y={A.y + 5} fill="#3d5a80" className="font-black text-2xl select-none">A</text>
+                <text x={C.x} y={C.y + 30} fill="#3d5a80" className="font-black text-2xl select-none" textAnchor="middle">C</text>
+                <text x={A.x + 55} y={A.y - 10} fill="#3d5a80" fontSize="18" className="font-en font-bold select-none">{angles.A}°</text>
+                <text x={B.x} y={B.y - 30} textAnchor="middle" fill="#3d5a80" fontSize="18" className="font-en font-bold select-none">{angles.B}°</text>
+                <text x={C.x + 60} y={C.y - 15} fill="#ee6c4d" fontSize="18" className="font-en font-bold select-none">{angles.Ext}°</text>
             </svg>
             <div className="mt-10 text-2xl font-black text-[#ee6c4d] bg-white border-2 border-[#ee6c4d] px-10 py-4 rounded-3xl shadow-xl select-none">
                 外角 {angles.Ext}° = {angles.A}° + {angles.B}°

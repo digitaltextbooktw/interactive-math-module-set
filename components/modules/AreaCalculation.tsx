@@ -13,10 +13,9 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
 
     const rawBase = C.x - A.x;
     const rawHeight = A.y - B.y;
-    const SCALE = 100;
-    const base = Number((rawBase / SCALE).toFixed(1));
-    const height = Number((rawHeight / SCALE).toFixed(1));
-    const area = Number(((base * height) / 2).toFixed(2));
+    const base = Math.round(rawBase / 30);
+    const height = Math.round(rawHeight / 30);
+    const area = Math.round((base * height) / 2);
     const D = { x: B.x + rawBase, y: B.y };
 
     useEffect(() => {
@@ -27,7 +26,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
                 { label: "高", value: height.toString() },
                 { label: "面積", value: area.toString() }
             ],
-            concept: `三角形面積公式：(底 × 高) / 2\n這可以看作是將兩個全等的三角形拼合後所成平行四邊形的一半。`,
+            concept: `三角形面積 = 底 × 高 ÷ 2，相當於同底等高的平行四邊形面積的一半。`,
             aiTip: "按下方按鈕，一步步看面積怎麼算！"
         });
     }, [base, height, area, setInfo]);
@@ -72,7 +71,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-[#EEEEEE] select-none">
             <svg ref={svgRef} width="100%" height="350" viewBox="0 0 550 400" className="overflow-visible select-none">
-                <polygon points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" />
+                <polygon points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
                 {step >= 1 && (
                     <polygon points={`${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}`} fill="#e0fbfc" fillOpacity="0.3" stroke="#98c1d9" strokeWidth="2" strokeDasharray="6" style={{ opacity: step >= 4 ? 0.3 : 1, transition: 'opacity 0.5s' }} />
                 )}
@@ -84,24 +83,23 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
                         <text x={B.x + 15} y={(B.y + A.y) / 2} fill="#ee6c4d" className="font-black text-xl select-none">高: {height}</text>
                     </>
                 )}
-                <circle 
-                    cx={B.x} cy={B.y} r="12" 
-                    onMouseDown={() => setDraggingPoint('B')} 
+                <circle
+                    cx={B.x} cy={B.y} r="14"
+                    onMouseDown={() => setDraggingPoint('B')}
                     onTouchStart={() => setDraggingPoint('B')}
-                    className="cursor-grab active:cursor-grabbing shadow-xl" 
-                    fill="white" stroke="#3d5a80" strokeWidth="4" 
+                    className="cursor-grab active:cursor-grabbing shadow-xl"
+                    fill="white" stroke="#ee6c4d" strokeWidth="3"
                 />
-                <circle 
-                    cx={C.x} cy={C.y} r="12" 
-                    onMouseDown={() => setDraggingPoint('C')} 
+                <circle
+                    cx={C.x} cy={C.y} r="14"
+                    onMouseDown={() => setDraggingPoint('C')}
                     onTouchStart={() => setDraggingPoint('C')}
-                    className="cursor-grab active:cursor-grabbing shadow-xl" 
-                    fill="white" stroke="#3d5a80" strokeWidth="4" 
+                    className="cursor-grab active:cursor-grabbing shadow-xl"
+                    fill="white" stroke="#ee6c4d" strokeWidth="3"
                 />
-                <circle cx={A.x} cy={A.y} r="6" fill="#293241" />
                 <text x="275" y="40" textAnchor="middle" className="text-2xl font-black fill-[#293241] select-none">
-                    {step === 3 && `平行四邊形面積 = ${base} × ${height} = ${(base*height).toFixed(2)}`}
-                    {step >= 4 && `三角形面積 = ${(base*height).toFixed(2)} / 2 = ${area}`}
+                    {step === 3 && `平行四邊形面積 = ${base} × ${height} = ${base * height}`}
+                    {step >= 4 && `三角形面積 = ${base * height} / 2 = ${area}`}
                 </text>
             </svg>
              <div className="flex items-center space-x-6 mt-8 select-none">

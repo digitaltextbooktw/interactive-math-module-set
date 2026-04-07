@@ -26,7 +26,7 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
                 { label: "∠2", value: `${angle2}°` },
                 { label: "總和", value: `180°` }
             ],
-            concept: `互補：當兩角之和為 180° 時，稱這兩個角互為補角。\n圖中直線 L 與射線 M 構成了一組鄰補角。`,
+            concept: `兩角之和等於 180° 時，互為補角。同一條直線上的相鄰兩角必定互補。`,
             aiTip: "拖動橘色點，看看兩個角怎麼互補！"
         });
     }, [angle1, angle2, setInfo]);
@@ -97,26 +97,25 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
                 className="w-full h-full max-h-[500px] overflow-visible select-none"
                 preserveAspectRatio="xMidYMid meet"
             >
+                <path d={arc1Path} fill="#98c1d9" fillOpacity="0.25" stroke="#98c1d9" strokeWidth="1" />
+                <path d={arc2Path} fill="#ee6c4d" fillOpacity="0.2" stroke="#ee6c4d" strokeWidth="1" />
                 <line x1="50" y1={centerY} x2="450" y2={centerY} stroke="#3d5a80" strokeWidth="3" />
                 <line x1={centerX} y1={centerY} x2={handlePoint.x} y2={handlePoint.y} stroke="#ee6c4d" strokeWidth="3" strokeLinecap="round" />
-                <path d={arc1Path} fill="#98c1d9" fillOpacity="0.2" stroke="#98c1d9" strokeWidth="1" />
-                <path d={arc2Path} fill="#e0fbfc" fillOpacity="0.3" stroke="#98c1d9" strokeWidth="1" />
-                <text x={label1Pos.x} y={label1Pos.y} textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="bold" fill="#3d5a80" className="pointer-events-none">
-                    ∠2 = {angle2}°
+                <text x={label1Pos.x} y={label1Pos.y} textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="bold" fill="#3d5a80" className="font-en pointer-events-none select-none">
+                    {angle2}°
                 </text>
-                <text x={label2Pos.x} y={label2Pos.y} textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="bold" fill="#3d5a80" className="pointer-events-none">
-                    ∠1 = {angle1}°
+                <text x={label2Pos.x} y={label2Pos.y} textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="bold" fill="#3d5a80" className="font-en pointer-events-none select-none">
+                    {angle1}°
                 </text>
-                <circle cx={centerX} cy={centerY} r="6" fill="#293241" />
-                <g 
-                    className="cursor-grab active:cursor-grabbing" 
+                <circle cx={centerX} cy={centerY} r="10" fill="white" stroke="#3d5a80" strokeWidth="3" />
+                <g
+                    className="cursor-grab active:cursor-grabbing"
                     onMouseDown={() => setIsDragging(true)}
                     onTouchStart={() => setIsDragging(true)}
                 >
                     <circle cx={handlePoint.x} cy={handlePoint.y} r="14" fill="white" stroke="#ee6c4d" strokeWidth="3" />
                 </g>
                 <text x={460} y={centerY + 5} fontSize="16" fill="#293241" className="font-black">L</text>
-                <text x={centerX} y={centerY + 25} textAnchor="middle" fontSize="16" fill="#293241" className="font-black">O</text>
             </svg>
         </div>
     );

@@ -33,7 +33,7 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
                 { label: "∠C", value: `${angleC}°` },
                 { label: "內角和", value: `${totalAngle}°` }
             ],
-            concept: `三角形內角和定理：任何三角形的三個內角總和恆等於 180°。`,
+            concept: `三角形的三個內角總和恆為 180°，不論形狀如何改變都成立。`,
             aiTip: "拖動三角形的頂點，觀察三個內角的和！"
         });
     }, [angleA, angleB, angleC, totalAngle, setInfo]);
@@ -67,7 +67,28 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
     }, [draggingIndex, handleInteraction]);
 
     const handleMouseUp = useCallback(() => setDraggingIndex(null), []);
-    
+
+    const drawSector = (center: Point, p1: Point, p2: Point, r: number): string => {
+        const a1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+        const a2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+        let diff = a2 - a1;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        const s = { x: center.x + r * Math.cos(a1), y: center.y + r * Math.sin(a1) };
+        const e = { x: center.x + r * Math.cos(a2), y: center.y + r * Math.sin(a2) };
+        return `M ${center.x},${center.y} L ${s.x},${s.y} A ${r},${r} 0 ${Math.abs(diff) > Math.PI ? 1 : 0},${diff > 0 ? 1 : 0} ${e.x},${e.y} Z`;
+    };
+
+    const getLabelPos = (vertex: Point, p1: Point, p2: Point, dist: number): Point => {
+        const a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+        const a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+        let diff = a2 - a1;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        const mid = a1 + diff / 2;
+        return { x: vertex.x + dist * Math.cos(mid), y: vertex.y + dist * Math.sin(mid) };
+    };
+
     useEffect(() => {
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
@@ -89,27 +110,38 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
                 className="w-full h-full overflow-visible select-none"
                 preserveAspectRatio="xMidYMid meet"
             >
+                {/* 扇形 */}
+                <path d={drawSector(points[0], points[1], points[2], 60)} fill="#ee6c4d" fillOpacity="0.2" stroke="#ee6c4d" strokeWidth="1" />
+                <path d={drawSector(points[1], points[2], points[0], 60)} fill="#ee6c4d" fillOpacity="0.2" stroke="#ee6c4d" strokeWidth="1" />
+                <path d={drawSector(points[2], points[0], points[1], 60)} fill="#ee6c4d" fillOpacity="0.2" stroke="#ee6c4d" strokeWidth="1" />
+
                 <polygon
                     points={points.map(p => `${p.x},${p.y}`).join(' ')}
-                    fill="#3d5a80" fillOpacity="0.1" stroke="#3d5a80" strokeWidth="4"
+                    fill="#98c1d9" fillOpacity="0.1" stroke="#3d5a80" strokeWidth="3"
                 />
+
+                {/* 度數標籤（三角形內） */}
+                {[
+                    { pos: getLabelPos(points[0], points[1], points[2], 85), val: angleA },
+                    { pos: getLabelPos(points[1], points[2], points[0], 85), val: angleB },
+                    { pos: getLabelPos(points[2], points[0], points[1], 85), val: angleC },
+                ].map((item, i) => (
+                    <text key={`label-${i}`} x={item.pos.x} y={item.pos.y} textAnchor="middle" dominantBaseline="middle" fill="#3d5a80" fontSize="22" className="font-en font-bold pointer-events-none select-none">
+                        {item.val}°
+                    </text>
+                ))}
+
+                {/* 控制點 */}
                 {points.map((p, i) => (
                     <g key={i}>
-                        <circle 
-                            cx={p.x} cy={p.y} r="16" fill="white" stroke={draggingIndex === i ? "#ee6c4d" : "#3d5a80"} strokeWidth="4"
-                            className="cursor-grab active:cursor-grabbing" 
-                            onMouseDown={() => setDraggingIndex(i)} 
+                        <circle
+                            cx={p.x} cy={p.y} r="20" fill="white" stroke="#ee6c4d" strokeWidth="4"
+                            className="cursor-grab active:cursor-grabbing"
+                            onMouseDown={() => setDraggingIndex(i)}
                             onTouchStart={() => setDraggingIndex(i)}
                         />
-                        <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fill={draggingIndex === i ? "#ee6c4d" : "#3d5a80"} className="font-black text-xl pointer-events-none">
+                        <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill="#ee6c4d" className="font-black text-2xl pointer-events-none select-none">
                             {['A', 'B', 'C'][i]}
-                        </text>
-                        <text 
-                            x={p.x + (p.x < 300 ? -20 : 20)} 
-                            y={p.y + (p.y < 200 ? -30 : 40)} 
-                            textAnchor="middle" fill="#3d5a80" className="font-bold text-lg pointer-events-none"
-                        >
-                            {i === 0 ? angleA : (i === 1 ? angleB : angleC)}°
                         </text>
                     </g>
                 ))}

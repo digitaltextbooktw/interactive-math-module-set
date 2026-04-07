@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import type { ModuleInfo } from '../../types';
 
 const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
-    const [sideA, setSideA] = useState(150);
-    const [sideB, setSideB] = useState(120);
-    const [sideC, setSideC] = useState(200);
+    const [sideA, setSideA] = useState(15);
+    const [sideB, setSideB] = useState(12);
+    const [sideC, setSideC] = useState(20);
     const [checked, setChecked] = useState(false);
 
     const canFormTriangle = sideA + sideB > sideC && sideA + sideC > sideB && sideB + sideC > sideA;
@@ -18,7 +18,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                 { label: "邊 b", value: sideB.toString() },
                 { label: "邊 c", value: sideC.toString() },
             ],
-            concept: "三角形不等式定理：三角形任意兩邊之和大於第三邊。\n滿足此條件的三條線段才能封閉成一個三角形。",
+            concept: "三角形任意兩邊之和必須大於第三邊，三條線段才能圍成三角形。",
             aiTip: "拖動滑桿改變邊長，按按鈕看能不能組成三角形！"
         });
     }, [sideA, sideB, sideC, setInfo]);
@@ -55,7 +55,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
             const pC = { x: pA.x + sideB * scale * Math.cos(angleA_real), y: pA.y - sideB * scale * Math.sin(angleA_real) };
             return (
                 <svg width="100%" height="100%" viewBox="0 0 500 260" className="select-none overflow-visible">
-                    <polygon points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="4" />
+                    <polygon points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
                     <g transform="translate(250, 40)">
                          <circle r="12" fill="#3d5a80" />
                          <path d="M-6 0 L-2 4 L6 -4" fill="none" stroke="white" strokeWidth="3" />
@@ -86,7 +86,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                          <line x1="5" y1="-5" x2="-5" y2="5" stroke="white" strokeWidth="3" />
                          <text x="20" y="7" fill="#f87171" className="font-black text-xl">無法構成三角形</text>
                     </g>
-                    <text x={svgWidth / 2} y={240} fontSize="14" fill="#3d5a80" textAnchor="middle" className="font-bold">
+                    <text x={svgWidth / 2} y={240} fontSize="18" fill="#3d5a80" textAnchor="middle" className="font-en font-bold">
                         兩短邊之和 ({sorted[0].val} + {sorted[1].val} = {sumShort}) ≤ 最長邊 ({maxVal})
                     </text>
                 </svg>
@@ -105,7 +105,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                     ].map(s => (
                         <div key={s.label} className="flex items-center gap-4 bg-white/50 p-3 rounded-2xl border border-white/40">
                             <span className="w-6 font-black text-lg text-[#3d5a80]">{s.label}</span>
-                            <input type="range" min="10" max="300" value={s.val} onChange={(e) => {
+                            <input type="range" min="1" max="50" value={s.val} onChange={(e) => {
                                 if (s.label === 'a') setSideA(+e.target.value);
                                 if (s.label === 'b') setSideB(+e.target.value);
                                 if (s.label === 'c') setSideC(+e.target.value);

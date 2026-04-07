@@ -30,7 +30,7 @@ const TriangleDisplay: React.FC<{ triangle: any; selection: Selection; onSelect:
     const sidePoints: [Point, Point][] = [[points[1], points[2]], [points[0], points[2]], [points[0], points[1]]];
     return (
         <g className="select-none">
-            <polygon points={points.map((p: Point) => `${p.x},${p.y}`).join(' ')} fill="#98c1d9" fillOpacity="0.15" stroke="#3d5a80" strokeWidth="2" />
+            <polygon points={points.map((p: Point) => `${p.x},${p.y}`).join(' ')} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" />
             {sidePoints.map((linePoints, i) => (
                 <line key={`side-${i}`} x1={linePoints[0].x} y1={linePoints[0].y} x2={linePoints[1].x} y2={linePoints[1].y}
                     stroke={selection.sides.has(i) ? '#ee6c4d' : 'transparent'} strokeWidth="8" strokeLinecap="round" onClick={() => onSelect('side', i)} className="cursor-pointer transition-all hover:stroke-[#98c1d9]/40" />
@@ -81,7 +81,7 @@ const Congruence: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo
         setInfo({
             title: "全等判定",
             data: [{ label: "判定性質", value: congruence }],
-            concept: "透過比較三個元素，判斷兩個三角形是否完全相同。\n橘色部分代表你當前選擇的對應邊角。",
+            concept: "兩個三角形若能完全重合，則稱為全等。常見判定方法：SSS、SAS、ASA、AAS。",
             aiTip: "點選左邊三角形的邊或角，右邊會同步標記！"
         });
     }, [congruence, setInfo]);

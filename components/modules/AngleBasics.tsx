@@ -131,7 +131,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                                 textAnchor="middle"
                                 dominantBaseline="middle"
                                 fill="#3d5a80"
-                                className="font-black select-none pointer-events-none" style={{ fontSize: '28px' }}
+                                className="font-en font-bold select-none pointer-events-none" style={{ fontSize: '28px' }}
                             >
                                 {angle}°
                             </text>
@@ -154,8 +154,8 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                     />
 
                     {/* 頂點 O */}
-                    <circle cx={centerX} cy={centerY} r="8" fill="#293241" />
-                    <text x={centerX} y={centerY + 40} textAnchor="middle" fill="#293241" className="font-black text-2xl select-none">O</text>
+                    <circle cx={centerX} cy={centerY} r="20" fill="white" stroke="#3d5a80" strokeWidth="4" />
+                    <text x={centerX} y={centerY} textAnchor="middle" dominantBaseline="middle" dy="0.08em" fill="#3d5a80" className="font-black text-2xl select-none pointer-events-none">O</text>
 
                     {/* 控制點 A */}
                     <g
@@ -168,9 +168,9 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                             x={ax}
                             y={ay}
                             textAnchor="middle"
-                            dominantBaseline="middle"
+                            dominantBaseline="middle" dy="0.08em"
                             fill="#ee6c4d"
-                            className="font-black text-xl select-none pointer-events-none"
+                            className="font-black text-2xl select-none pointer-events-none"
                         >
                             A
                         </text>
