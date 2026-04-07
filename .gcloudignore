@@ -1,0 +1,7 @@
+.git
+node_modules
+dist
+*.png
+.playwright-mcp/
+migrated_prompt_history/
+.claude/
