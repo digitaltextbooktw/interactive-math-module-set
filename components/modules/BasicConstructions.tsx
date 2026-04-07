@@ -84,7 +84,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
     }, [handleMouseMove, handleMouseUp, handleTouchMove]);
 
     return (
-        <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="overflow-visible select-none">
+        <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="overflow-visible select-none">
             <line x1="50" y1={lineY} x2="450" y2={lineY} stroke={COLORS.main} strokeWidth="4" />
             <text x="460" y={lineY + 5} fill={COLORS.main} className="font-bold text-lg select-none">L</text>
             
@@ -114,8 +114,8 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
 
 const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
     const svgRef = useRef<SVGSVGElement>(null);
-    const [pointA, setPointA] = useState<Point>({ x: 120, y: 220 });
-    const [pointB, setPointB] = useState<Point>({ x: 380, y: 180 });
+    const [pointA, setPointA] = useState<Point>({ x: 120, y: 270 });
+    const [pointB, setPointB] = useState<Point>({ x: 380, y: 230 });
     const [draggingPoint, setDraggingPoint] = useState<'A' | 'B' | null>(null);
     const [showBisector, setShowBisector] = useState(false);
 
@@ -194,7 +194,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
     return (
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
-                <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
+                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="select-none overflow-visible">
                     <line x1={pointA.x} y1={pointA.y} x2={pointB.x} y2={pointB.y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 
                     {showBisector && (
@@ -253,7 +253,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
 
 const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
     const svgRef = useRef<SVGSVGElement>(null);
-    const center: Point = { x: 250, y: 250 };
+    const center: Point = { x: 250, y: 300 };
     const radius = 130;
     const [points, setPoints] = useState<[Point, Point]>([
         { x: center.x + radius, y: center.y },
@@ -348,7 +348,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     return (
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
-                <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 500 400" className="select-none overflow-visible">
+                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="select-none overflow-visible">
                     <line x1={center.x} y1={center.y} x2={points[0].x} y2={points[0].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
                     <line x1={center.x} y1={center.y} x2={points[1].x} y2={points[1].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 

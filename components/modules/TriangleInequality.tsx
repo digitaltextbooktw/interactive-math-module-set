@@ -36,7 +36,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
         if (!checked) {
             const scale = 300 / Math.max(sideA, sideB, sideC, 1);
             return (
-                <svg width="100%" height="100%" viewBox="0 0 500 260" className="select-none overflow-visible">
+                <svg width="100%" height="240" viewBox="0 0 500 260" className="select-none overflow-visible">
                     <line x1="100" y1="60" x2={100 + sideA * scale} y2="60" stroke="#3d5a80" strokeWidth="6" strokeLinecap="round" />
                     <line x1="100" y1="130" x2={100 + sideB * scale} y2="130" stroke="#3d5a80" strokeWidth="6" strokeLinecap="round" />
                     <line x1="100" y1="200" x2={100 + sideC * scale} y2="200" stroke="#3d5a80" strokeWidth="6" strokeLinecap="round" />
@@ -54,7 +54,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
             const pB = { x: pA.x + sideC * scale, y: pA.y };
             const pC = { x: pA.x + sideB * scale * Math.cos(angleA_real), y: pA.y - sideB * scale * Math.sin(angleA_real) };
             return (
-                <svg width="100%" height="100%" viewBox="0 0 500 260" className="select-none overflow-visible">
+                <svg width="100%" height="240" viewBox="0 0 500 260" className="select-none overflow-visible">
                     <polygon points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
                     <g transform="translate(250, 40)">
                          <circle r="12" fill="#3d5a80" />
@@ -75,7 +75,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
             const xMax_end = startX + maxVal * scale;
 
             return (
-                <svg width="100%" height="100%" viewBox="0 0 500 260" className="select-none overflow-visible">
+                <svg width="100%" height="240" viewBox="0 0 500 260" className="select-none overflow-visible">
                     <line x1={startX} y1={yTop} x2={x1_end} y2={yTop} stroke="#3d5a80" strokeWidth="6" strokeLinecap="round" />
                     <line x1={x1_end} y1={yTop} x2={x2_end} y2={yTop} stroke="#98c1d9" strokeWidth="6" strokeLinecap="round" />
                     <line x1={x2_end} y1={yTop} x2={xMax_end} y2={yTop} stroke="#ee6c4d" strokeWidth="3" strokeDasharray="6,4" />

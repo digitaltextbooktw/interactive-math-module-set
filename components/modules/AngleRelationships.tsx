@@ -12,7 +12,7 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
     const [isDragging, setIsDragging] = useState(false);
     
     const centerX = 250;
-    const centerY = 170;
+    const centerY = 230;
     const lineLength = 140;
 
     const angle1 = Math.round(angle);

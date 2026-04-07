@@ -185,7 +185,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                     <button
                         key={val}
                         onClick={() => setAngle(val)}
-                        className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-base sm:text-lg font-black transition-all border-2 ${
+                        className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-base sm:text-lg font-en font-black transition-all border-2 ${
                             angle === val
                             ? 'bg-[#ee6c4d] border-[#ee6c4d] text-white shadow-lg scale-105'
                             : 'bg-white border-[#98c1d9]/50 text-[#3d5a80] hover:border-[#98c1d9] active:scale-95 shadow-sm'
