@@ -104,7 +104,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
             </svg>
              <div className="flex items-center space-x-6 mt-8 select-none">
                 <button onClick={() => setStep(prev => Math.max(0, prev - 1))} className="p-4 rounded-2xl bg-white border border-[#3d5a80]/12 shadow-md hover:bg-[#e0fbfc] transition-all"><ChevronLeftIcon className="w-8 h-8 text-[#3d5a80]" /></button>
-                <div className="font-black px-10 py-4 bg-[#3d5a80] text-[#e0fbfc] rounded-3xl text-xl min-w-[280px] text-center shadow-2xl border border-[#98c1d9]/30 select-none">
+                <div className="font-bold px-10 py-4 bg-[#3d5a80] text-[#e0fbfc] rounded-3xl text-xl min-w-[280px] text-center shadow-2xl border border-[#98c1d9]/30 select-none">
                     {steps[step]}
                 </div>
                 <button onClick={() => setStep(prev => Math.min(4, prev + 1))} className="p-4 rounded-2xl bg-white border border-[#3d5a80]/12 shadow-md hover:bg-[#e0fbfc] transition-all"><ChevronRightIcon className="w-8 h-8 text-[#3d5a80]" /></button>

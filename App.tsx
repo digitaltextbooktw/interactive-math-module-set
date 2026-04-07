@@ -219,7 +219,7 @@ const App: React.FC = () => {
                 <div className="flex bg-[#3d5a80] rounded-full p-1 shadow-lg ml-auto shrink-0">
                     <button
                         onClick={() => setPracticeMode(false)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                        className={`px-4 pb-2 pt-1.5 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
                             !practiceMode
                                 ? 'bg-[#e0fbfc] text-[#293241] shadow-md'
                                 : 'text-[#98c1d9] hover:text-[#e0fbfc]'
@@ -229,7 +229,7 @@ const App: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setPracticeMode(true)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                        className={`px-4 pb-2 pt-1.5 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
                             practiceMode
                                 ? 'bg-[#ee6c4d] text-white shadow-md'
                                 : 'text-[#98c1d9] hover:text-[#e0fbfc]'
@@ -286,7 +286,7 @@ const App: React.FC = () => {
                             {currentInfo.data.map(item => (
                                 <div key={item.label} className="flex justify-between items-center border-b border-[#3d5a80]/5 pb-1">
                                     <span className="text-base font-bold text-[#3d5a80]/80">{item.label}</span>
-                                    <span className="text-xl font-en font-black text-[#ee6c4d]">{item.value}</span>
+                                    <span className={`font-black text-[#ee6c4d] ${/^[\d.°%+\-×÷=\s\/]+$/.test(item.value) ? 'text-xl font-en' : 'text-base'}`}>{item.value}</span>
                                 </div>
                             ))}
                         </div>

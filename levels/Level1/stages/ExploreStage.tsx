@@ -13,7 +13,7 @@ interface TriDef {
 // Equilateral: use exact geometry (side=346, height=300)
 const EQ_SIDE = 346;
 const EQ_H = EQ_SIDE * Math.sqrt(3) / 2; // ≈ 300
-const EQ_CX = 400, EQ_BY = 450;
+const EQ_CX = 400, EQ_BY = 500;
 const TRIANGLES: TriDef[] = [
   { name: '等邊三角形', points: [
     {x: EQ_CX, y: EQ_BY - EQ_H},  // A top
@@ -85,7 +85,7 @@ function clientToSvg(svg: SVGSVGElement, clientX: number, clientY: number) {
 }
 
 import {
-  exploreEntryHint, allCompleteText,
+  allCompleteText,
   guessRecallCorrect, guessRecallWrong, guessCorrectIndex,
 } from '../data';
 
@@ -102,15 +102,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
   const [done, setDone] = useState<number[]>([]);
   const [info, setInfo] = useState('');
   const [shaking, setShaking] = useState(false);
-  const [entryHint, setEntryHint] = useState(true);
   const [allDoneOverlay, setAllDoneOverlay] = useState<string | null>(null);
-
-  // Entry hint — fade out after 2s
-  useEffect(() => {
-    if (!entryHint) return;
-    const t = setTimeout(() => setEntryHint(false), 2500);
-    return () => clearTimeout(t);
-  }, [entryHint]);
 
   const dragRef = useRef<{ mode: string | null; startX: number; startY: number; protX: number; protY: number }>({ mode: null, startX: 0, startY: 0, protX: 0, protY: 0 });
   const protRef = useRef(prot);
@@ -364,7 +356,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
       if (i % 30 === 0) {
         const tx = (90 - 24) * cos;
         const ty = prot.flipY * (-(90 - 24) * sin);
-        lines.push(`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#334155" font-weight="900" transform="rotate(${counterRot}, ${tx}, ${ty})">${i}°</text>`);
+        lines.push(`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#334155" font-weight="900" font-family="var(--font-en)" transform="rotate(${counterRot}, ${tx}, ${ty})">${i}°</text>`);
       }
     }
     return lines.join('');
@@ -386,7 +378,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
   ry = Math.max(30, Math.min(570, ry));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '15px 20px', paddingBottom: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '15px 20px' }}>
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 0 }}>
         {TRIANGLES.map((t, i) => (
@@ -409,7 +401,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
 
       {/* Canvas */}
       <div style={{
-        flexGrow: 1, background: 'white', borderRadius: '0 0 16px 16px',
+        flexGrow: 1, background: 'white', borderRadius: '0 16px 16px 16px',
         position: 'relative', border: '1px solid #E5E7EB', overflow: 'hidden',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
       }}>
@@ -422,8 +414,8 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
         }}>
           {['A', 'B', 'C'].map((l, i) => (
             <div key={l} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 40 }}>
-              <div style={{ fontSize: 9, color: '#94A3B8', fontWeight: 700 }}>角 {l}</div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#293241' }}>
+              <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700 }}>∠{l}</div>
+              <div className="font-en" style={{ fontSize: 18, fontWeight: 900, color: '#293241' }}>
                 {measured[i] !== null ? `${measured[i]}°` : '?'}
               </div>
             </div>
@@ -433,8 +425,8 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
             return acc;
           }, [])}
           <div style={{ borderLeft: '2px solid #F1F5F9', paddingLeft: 12, marginLeft: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 40 }}>
-            <div style={{ fontSize: 9, color: '#94A3B8', fontWeight: 700 }}>總和</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: allMeasured ? '#10B981' : '#3d5a80' }}>
+            <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700 }}>總和</div>
+            <div className="font-en" style={{ fontSize: 18, fontWeight: 900, color: allMeasured ? '#10B981' : '#3d5a80' }}>
               {measured.some(a => a !== null) ? `${measured.reduce((a, b) => (a ?? 0) + (b ?? 0), 0)}°` : '?'}
             </div>
           </div>
@@ -521,10 +513,11 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
                     x={labelPos.x} y={labelPos.y}
                     textAnchor="middle" dominantBaseline="central"
                     fontSize="18" fontWeight="900" fill="#065F46"
+                    className="font-en"
                   >
                     {measured[i]}°
                   </text>
-                  <text x={lx} y={ly + 5} textAnchor="middle" fontSize="16" fontWeight="900" fill="#293241" opacity="0.6">
+                  <text x={lx} y={ly + 5} textAnchor="middle" fontSize="22" fontWeight="900" fill="#293241" opacity="0.6">
                     {tri.labels[i]}
                   </text>
                 </g>
@@ -538,7 +531,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
                 <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="900" fill="#3d5a80">
                   ?
                 </text>
-                <text x={lx} y={ly + 5} textAnchor="middle" fontSize="16" fontWeight="900" fill="#293241" opacity="0.6">
+                <text x={lx} y={ly + 5} textAnchor="middle" fontSize="22" fontWeight="900" fill="#293241" opacity="0.6">
                   {tri.labels[i]}
                 </text>
               </g>
@@ -567,7 +560,7 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
           {prot.hasInteracted && (
             <>
               <rect x={rx - 32} y={ry - 16} width="64" height="32" rx="16" fill={isCorrect ? '#10B981' : '#ee6c4d'} filter="url(#shadow)" />
-              <text x={rx} y={ry + 1} textAnchor="middle" dominantBaseline="central" fontWeight="900" fontSize="17" fill="white">
+              <text x={rx} y={ry + 1} textAnchor="middle" dominantBaseline="central" fontWeight="900" fontSize="17" fill="white" className="font-en">
                 {prot._displayAngle ?? Math.round(prot.pointerAngle)}°
               </text>
             </>
@@ -575,17 +568,6 @@ export default function ExploreStage({ guessAnswer, onComplete }: ExploreProps) 
         </svg>
       </div>
 
-      {/* Bottom bar — entry hint only */}
-      <div style={{ marginTop: 10, textAlign: 'center', minHeight: '1.5rem' }}>
-        {entryHint && (
-          <span style={{
-            color: '#6B7280', fontSize: 14, fontWeight: 500,
-            opacity: entryHint ? 1 : 0, transition: 'opacity 0.5s',
-          }}>
-            {exploreEntryHint}
-          </span>
-        )}
-      </div>
 
       {/* All-done overlay (big center text) */}
       {allDoneOverlay && (

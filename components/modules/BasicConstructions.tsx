@@ -27,7 +27,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
 
     useEffect(() => {
         setInfo({
-            title: "基本作圖 - 垂足",
+            title: "基本作圖 - 垂線",
             data: isPerpendicular
                 ? [{ label: "關係", value: "垂直 (⊥)" }]
                 : [{ label: "夾角", value: `${angleDeg}°` }],
@@ -102,7 +102,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
                 className="cursor-grab active:cursor-grabbing"
             >
                 <circle cx={pointB.x} cy={pointB.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
-                <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-2xl" fill={COLORS.highlight}>B</text>
+                <text x={pointB.x} y={pointB.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-lg" fill={COLORS.highlight}>B</text>
             </g>
         </svg>
     );
@@ -362,7 +362,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                             className="cursor-grab active:cursor-grabbing"
                         >
                             <circle cx={p.x} cy={p.y} r="16" fill="white" stroke={COLORS.highlight} strokeWidth="3" />
-                            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-2xl" fill={COLORS.highlight}>{i === 0 ? 'A' : 'B'}</text>
+                            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" dy="0.08em" className="font-black select-none pointer-events-none text-lg" fill={COLORS.highlight}>{i === 0 ? 'A' : 'B'}</text>
                         </g>
                     ))}
                 </svg>
@@ -383,7 +383,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
 const BasicConstructions: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setInfo }) => {
     const [mode, setMode] = useState<ConstructionMode>('foot');
     const tabs: {id: ConstructionMode, name: string}[] = [
-        { id: 'foot', name: '垂足' },
+        { id: 'foot', name: '垂線' },
         { id: 'bisector', name: '中垂線' },
         { id: 'angle-bisector', name: '角平分線' }
     ];

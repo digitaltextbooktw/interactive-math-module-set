@@ -192,15 +192,15 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           {/* Angle degree labels inside sectors */}
           {(() => {
             const posA = sectorLabelPos(A, C, B, 45);
-            return <text x={posA.x} y={posA.y} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#3d5a80">{angles.A}°</text>;
+            return <text x={posA.x} y={posA.y} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#3d5a80" className="font-en">{angles.A}°</text>;
           })()}
           {(() => {
             const posB = sectorLabelPos(B, A, C, 45);
-            return <text x={posB.x} y={posB.y} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#3d5a80">{angles.B}°</text>;
+            return <text x={posB.x} y={posB.y} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill="#3d5a80" className="font-en">{angles.B}°</text>;
           })()}
           {(() => {
             const posExt = sectorLabelPos(C, D, B, 45);
-            return <text x={posExt.x} y={posExt.y} textAnchor="middle" dominantBaseline="central" fontSize="18" fontWeight="900" fill="#ee6c4d">{angles.ext}°</text>;
+            return <text x={posExt.x} y={posExt.y} textAnchor="middle" dominantBaseline="central" fontSize="18" fontWeight="900" fill="#ee6c4d" className="font-en">{angles.ext}°</text>;
           })()}
 
           {/* Draggable vertices with labels inside */}
@@ -216,7 +216,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 style={{ cursor: 'grab' }}
               >
                 <circle cx={p.x} cy={p.y} r="16" fill="white" stroke={strokeColor} strokeWidth="3" />
-                <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="12" fontWeight="900" fill={fillColor} style={{ pointerEvents: 'none' }}>
+                <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="16" fontWeight="900" fill={fillColor} className="font-en" style={{ pointerEvents: 'none' }}>
                   {label}
                 </text>
                 <circle cx={p.x} cy={p.y} r="28" fill="transparent" />

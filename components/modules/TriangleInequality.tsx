@@ -116,7 +116,7 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                     ))}
                 </div>
 
-                <button onClick={() => setChecked(!checked)} className="shrink-0 px-8 py-3 bg-[#ee6c4d] text-white font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-all">
+                <button onClick={() => setChecked(!checked)} className="shrink-0 px-8 py-3 bg-[#ee6c4d] text-white font-bold text-lg rounded-2xl shadow-xl hover:scale-105 transition-all">
                     {checked ? "重新配置" : "驗證邊長關係"}
                 </button>
 
