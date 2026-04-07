@@ -84,7 +84,7 @@ const PerpendicularFoot: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ 
     }, [handleMouseMove, handleMouseUp, handleTouchMove]);
 
     return (
-        <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="overflow-visible select-none">
+        <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" style={{ touchAction: 'none' }} className="overflow-visible select-none">
             <line x1="50" y1={lineY} x2="450" y2={lineY} stroke={COLORS.main} strokeWidth="4" />
             <text x="460" y={lineY + 5} fill={COLORS.main} className="font-bold text-lg select-none">L</text>
             
@@ -174,7 +174,10 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
     }, [handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (draggingPoint) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (draggingPoint) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [draggingPoint, handleInteraction]);
 
     useEffect(() => {
@@ -194,7 +197,7 @@ const PerpendicularBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> =
     return (
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
-                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="select-none overflow-visible">
+                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" style={{ touchAction: 'none' }} className="select-none overflow-visible">
                     <line x1={pointA.x} y1={pointA.y} x2={pointB.x} y2={pointB.y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 
                     {showBisector && (
@@ -348,7 +351,7 @@ const AngleBisector: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
     return (
         <div className="relative w-full h-full flex flex-col bg-[#EEEEEE] select-none">
              <div className="flex-1 relative">
-                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" className="select-none overflow-visible">
+                <svg ref={svgRef} width="100%" height="560" viewBox="0 0 500 500" style={{ touchAction: 'none' }} className="select-none overflow-visible">
                     <line x1={center.x} y1={center.y} x2={points[0].x} y2={points[0].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
                     <line x1={center.x} y1={center.y} x2={points[1].x} y2={points[1].y} stroke={COLORS.main} strokeWidth="4" strokeLinecap="round" />
 

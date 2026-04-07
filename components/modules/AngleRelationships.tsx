@@ -98,9 +98,10 @@ const AngleRelationships: React.FC<AngleRelationshipsProps> = ({ setInfo }) => {
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#EEEEEE] select-none p-4">
-            <svg 
-                ref={svgRef} 
-                viewBox="0 0 500 340" 
+            <svg
+                ref={svgRef}
+                viewBox="0 0 500 340"
+                style={{ touchAction: 'none' }}
                 className="w-full h-full max-h-[500px] overflow-visible select-none"
                 preserveAspectRatio="xMidYMid meet"
             >

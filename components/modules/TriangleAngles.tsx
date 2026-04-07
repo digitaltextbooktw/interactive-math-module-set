@@ -105,9 +105,10 @@ const TriangleAngles: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ set
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#EEEEEE] select-none p-4">
-            <svg 
-                ref={svgRef} 
-                viewBox="0 0 600 400" 
+            <svg
+                ref={svgRef}
+                viewBox="0 0 600 400"
+                style={{ touchAction: 'none' }}
                 className="w-full h-full overflow-visible select-none"
                 preserveAspectRatio="xMidYMid meet"
             >

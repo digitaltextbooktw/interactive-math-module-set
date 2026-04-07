@@ -67,10 +67,10 @@ function NavArrow({ direction, disabled, onClick }: { direction: 'left' | 'right
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}
     >
-      <svg viewBox="0 0 24 40" width="20" height="34">
+      <svg viewBox="0 0 24 28" width="20" height="24">
         {direction === 'left'
-          ? <path d="M18 4 L6 20 L18 36" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-          : <path d="M6 4 L18 20 L6 36" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          ? <path d="M17 4 L7 14 L17 24" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          : <path d="M7 4 L17 14 L7 24" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
         }
       </svg>
     </button>
@@ -130,7 +130,7 @@ export default function QuizStage({ onComplete }: Props) {
         <NavArrow direction="left" disabled={qIdx === 0} onClick={() => goTo('prev')} />
 
         <div style={{
-          flex: '0 1 auto', maxWidth: 600, width: '100%', margin: '0 auto',
+          flex: '0 1 auto', maxWidth: 820, width: '100%', margin: '0 auto',
           background: 'white', borderRadius: 24,
           padding: 'clamp(16px, 3.5vmin, 24px) clamp(16px, 4vmin, 32px)',
           boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #F1F5F9',

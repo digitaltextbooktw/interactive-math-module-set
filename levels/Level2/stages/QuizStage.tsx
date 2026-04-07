@@ -63,10 +63,10 @@ function NavArrow({ direction, disabled, onClick }: { direction: 'left' | 'right
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}
     >
-      <svg viewBox="0 0 24 40" width="20" height="34">
+      <svg viewBox="0 0 24 28" width="20" height="24">
         {direction === 'left'
-          ? <path d="M18 4 L6 20 L18 36" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-          : <path d="M6 4 L18 20 L6 36" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          ? <path d="M17 4 L7 14 L17 24" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          : <path d="M7 4 L17 14 L7 24" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
         }
       </svg>
     </button>

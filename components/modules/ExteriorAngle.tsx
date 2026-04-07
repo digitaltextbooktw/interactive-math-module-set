@@ -91,7 +91,7 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-[#EEEEEE] select-none">
-            <svg ref={svgRef} width="100%" height="320" viewBox="0 0 500 320" className="overflow-visible select-none">
+            <svg ref={svgRef} width="100%" height="320" viewBox="0 0 500 320" style={{ touchAction: 'none' }} className="overflow-visible select-none">
                 <path d={drawSector(A, C, B, 45)} fill="#98c1d9" fillOpacity="0.2" stroke="#98c1d9" strokeWidth="1" />
                 <path d={drawSector(B, A, C, 45)} fill="#98c1d9" fillOpacity="0.2" stroke="#98c1d9" strokeWidth="1" />
                 <path d={drawSector(C, D, B, 50)} fill="#ee6c4d" fillOpacity="0.3" stroke="#ee6c4d" strokeWidth="2" />

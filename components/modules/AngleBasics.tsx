@@ -114,6 +114,7 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
                 <svg
                     ref={svgRef}
                     viewBox="0 0 600 400"
+                    style={{ touchAction: 'none' }}
                     className="w-full h-full select-none overflow-visible"
                     preserveAspectRatio="xMidYMid meet"
                 >

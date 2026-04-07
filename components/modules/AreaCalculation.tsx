@@ -48,7 +48,10 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
     }, [handleInteraction]);
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (draggingPoint) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        if (draggingPoint) {
+            e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [draggingPoint, handleInteraction]);
 
     const handleMouseUp = useCallback(() => setDraggingPoint(null), []);
@@ -70,7 +73,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-[#EEEEEE] select-none">
-            <svg ref={svgRef} width="100%" height="350" viewBox="0 0 550 400" className="overflow-visible select-none">
+            <svg ref={svgRef} width="100%" height="350" viewBox="0 0 550 400" style={{ touchAction: 'none' }} className="overflow-visible select-none">
                 <polygon points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
                 {step >= 1 && (
                     <polygon points={`${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}`} fill="#e0fbfc" fillOpacity="0.3" stroke="#98c1d9" strokeWidth="2" strokeDasharray="6" style={{ opacity: step >= 4 ? 0.3 : 1, transition: 'opacity 0.5s' }} />
