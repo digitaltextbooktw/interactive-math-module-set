@@ -8,13 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://font.emtech.cc/css/GenSenRoundedTW">
     <style>
-      :root {
-        --font-main: 'Zen Maru Gothic', 'GenSenRoundedTW', 'Noto Sans TC', sans-serif;
-        --font-en: 'Nunito', sans-serif;
-      }
-
       * {
         -webkit-user-select: none;
         user-select: none;
@@ -25,58 +21,6 @@
       input, textarea {
         -webkit-user-select: text;
         user-select: text;
-      }
-
-      body {
-        font-family: var(--font-main);
-        background-color: #293241;
-        line-height: 1.6;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        min-height: 100dvh;
-        overflow-x: hidden;
-        overscroll-behavior-y: none;
-      }
-      
-      .font-en {
-        font-family: var(--font-en) !important;
-      }
-
-      input, select, button {
-        font-family: var(--font-main) !important;
-      }
-
-      /* 自定義精細捲軸 (僅用於內部區域) */
-      ::-webkit-scrollbar {
-        width: 4px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #3d5a80;
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #ee6c4d;
-      }
-
-      /* Practice mode animations */
-      @keyframes fadeSlideIn {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
-      }
-      @keyframes fadeSlideOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(-30px); }
-      }
-      @keyframes protractorShake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-4px); }
-        75% { transform: translateX(4px); }
       }
     </style>
   <script type="importmap">
