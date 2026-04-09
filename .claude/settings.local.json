@@ -16,7 +16,23 @@
       "mcp__plugin_playwright_playwright__browser_resize",
       "Bash(taskkill //F //IM msedge.exe)",
       "Skill(commit-commands:commit)",
-      "Skill(commit-commands:commit:*)"
+      "Skill(commit-commands:commit:*)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(ls -d */)",
+      "Bash(ls *.css app.css index.css styles.css)",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "Bash(rm:*)",
+      "Bash(gcloud config:*)",
+      "Bash(gcloud app:*)",
+      "Bash(gcloud run services list:*)",
+      "Bash(gcloud firebase:*)",
+      "Bash(gcloud projects:*)",
+      "Bash(gcloud run:*)",
+      "Bash(curl -s https://interactive-math-module-set-1075853042812.us-west1.run.app/)",
+      "Bash(curl -s \"https://interactive-math-module-set-1075853042812.us-west1.run.app/?t=$\\(date +%s\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "mcp__plugin_playwright_playwright__browser_drag",
+      "mcp__plugin_playwright_playwright__browser_run_code"
     ]
   }
 }
