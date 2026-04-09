@@ -105,7 +105,7 @@ function TriPanel({ type }: { type: Tab }) {
       minWidth: 0,
     }}>
       <div style={{
-        fontSize: 'clamp(12px, 1.8vmin, 14px)', fontWeight: 900,
+        fontSize: 'clamp(14px, 2.2vmin, 17px)', fontWeight: 900,
         color: type === 'aaa' ? '#ee6c4d' : '#3d5a80', textAlign: 'center',
       }}>
         {base.label}
@@ -125,21 +125,33 @@ function TriPanel({ type }: { type: Tab }) {
           style={{ transition: isLocked ? 'all 0.3s ease-out' : undefined }}
         />
 
-        {/* Side lengths */}
+        {/* Side lengths — accent color for "known" conditions */}
+        {/* side a (BC right): SSS=known, SAS=derived, AAA=derived */}
         <text x={(pts.B.x + pts.C.x) / 2 + 8} y={(pts.B.y + pts.C.y) / 2}
-          fontSize="11" fontWeight="700" fill={type === 'aaa' ? '#ee6c4d' : '#3d5a80'}>{sides.a}</text>
+          className="font-en" fontSize="13" fontWeight="700"
+          fill={type === 'sss' ? '#ee6c4d' : '#94A3B8'}>{sides.a}</text>
+        {/* side b (AC left): SSS=known, SAS=known, AAA=derived */}
         <text x={(pts.A.x + pts.C.x) / 2 - 20} y={(pts.A.y + pts.C.y) / 2}
-          fontSize="11" fontWeight="700" fill={type === 'aaa' ? '#ee6c4d' : '#3d5a80'}>{sides.b}</text>
+          className="font-en" fontSize="13" fontWeight="700"
+          fill={type === 'sss' || type === 'sas' ? '#ee6c4d' : '#94A3B8'}>{sides.b}</text>
+        {/* side c (AB base): SSS=known, SAS=known, AAA=derived */}
         <text x={(pts.A.x + pts.B.x) / 2} y={pts.A.y + 15} textAnchor="middle"
-          fontSize="11" fontWeight="700" fill="#3d5a80">{sides.c}</text>
+          className="font-en" fontSize="13" fontWeight="700"
+          fill={type === 'sss' || type === 'sas' ? '#ee6c4d' : '#94A3B8'}>{sides.c}</text>
 
-        {/* Angles */}
-        <text x={pts.A.x + 8} y={pts.A.y - 6} fontSize="10" fontWeight="900" fill="#534AB7">{angles.A}°</text>
-        <text x={pts.B.x - 25} y={pts.B.y - 6} fontSize="10" fontWeight="900" fill="#0F6E56">{angles.B}°</text>
-        <text x={pts.C.x} y={pts.C.y - 8} textAnchor="middle" fontSize="10" fontWeight="900" fill="#993C1D">{angles.C}°</text>
+        {/* Angles — accent color for "known" conditions */}
+        {/* angle A: SAS=known, AAA=known, SSS=derived */}
+        <text x={pts.A.x + 8} y={pts.A.y - 6} className="font-en" fontSize="12" fontWeight="900"
+          fill={type === 'sas' || type === 'aaa' ? '#ee6c4d' : '#94A3B8'}>{angles.A}°</text>
+        {/* angle B: AAA=known, SSS=derived, SAS=derived */}
+        <text x={pts.B.x - 25} y={pts.B.y - 6} className="font-en" fontSize="12" fontWeight="900"
+          fill={type === 'aaa' ? '#ee6c4d' : '#94A3B8'}>{angles.B}°</text>
+        {/* angle C: AAA=known, SSS=derived, SAS=derived */}
+        <text x={pts.C.x} y={pts.C.y - 8} textAnchor="middle" className="font-en" fontSize="12" fontWeight="900"
+          fill={type === 'aaa' ? '#ee6c4d' : '#94A3B8'}>{angles.C}°</text>
 
         {/* Drag hint */}
-        <text x="160" y="210" textAnchor="middle" fontSize="10" fill="#94A3B8" fontWeight="500">
+        <text x="160" y="210" textAnchor="middle" fontSize="11" fill="#94A3B8" fontWeight="500">
           {type === 'aaa' ? '↕ 拖拉看看' : '試著拖拉頂點'}
         </text>
 
@@ -152,7 +164,7 @@ function TriPanel({ type }: { type: Tab }) {
       </svg>
 
       <div style={{
-        fontSize: 'clamp(10px, 1.5vmin, 12px)', textAlign: 'center', fontWeight: 500,
+        fontSize: 'clamp(13px, 2vmin, 15px)', textAlign: 'center', fontWeight: 600,
         color: type === 'aaa' ? '#ee6c4d' : '#10B981',
       }}>
         {isLocked ? '形狀被鎖死了！' : '形狀一樣，大小會變！'}
@@ -168,6 +180,7 @@ export default function RevealStage({ onComplete }: { onComplete: () => void }) 
       padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)',
       gap: 'clamp(6px, 1vmin, 10px)',
       fontFamily: 'var(--font-main)',
+      touchAction: 'manipulation',
     }}>
       {/* Title */}
       <div style={{
