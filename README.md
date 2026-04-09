@@ -29,7 +29,7 @@ npm run dev      # http://localhost:3000
 - React 19 + TypeScript + Vite
 - Tailwind CSS (CDN)
 - 字體：Zen Maru Gothic（主）、Nunito（數字/英文）
-- 純 SVG 互動圖形，支援滑鼠與觸控
+- 純 SVG 互動圖形，需支援滑鼠與觸控
 
 ## 專案結構
 

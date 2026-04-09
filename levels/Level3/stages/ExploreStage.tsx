@@ -115,7 +115,7 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
   // Perpendicular pointing downward (for horizontal lines)
   const nx = -dy / len;
   const ny = dx / len;
-  const rulerW = 24;
+  const rulerW = 36;
   // Extend beyond 0 and 5 marks so it looks like a real ruler
   const overshoot = 14;
   const bodyStart = { x: from.x - ux * overshoot, y: from.y - uy * overshoot };
@@ -128,10 +128,10 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
         width={Math.sqrt((bodyEnd.x - bodyStart.x) ** 2 + (bodyEnd.y - bodyStart.y) ** 2)}
         height={rulerW}
         rx="4" ry="4"
-        fill="#e8e5dc" fillOpacity="0.7" stroke="#B0A898" strokeWidth="1"
+        fill="#f5f0e6" fillOpacity="0.9" stroke="#8A7F72" strokeWidth="1.5"
         transform={`translate(${bodyStart.x},${bodyStart.y}) rotate(${Math.atan2(bodyEnd.y - bodyStart.y, bodyEnd.x - bodyStart.x) * 180 / Math.PI})`}
       />
-      <line x1={from.x} y1={from.y} x2={rulerEnd.x} y2={rulerEnd.y} stroke="#3d5a80" strokeWidth="1" opacity="0.4" />
+      <line x1={from.x} y1={from.y} x2={rulerEnd.x} y2={rulerEnd.y} stroke="#3d5a80" strokeWidth="1.5" opacity="0.6" />
       {Array.from({ length: units + 1 }, (_, i) => {
         const t = i / units;
         const tickLen = rulerW * 0.3;
@@ -142,10 +142,10 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
             <line
               x1={tx} y1={ty}
               x2={tx + nx * tickLen} y2={ty + ny * tickLen}
-              stroke="#8A7F72" strokeWidth="0.7" />
+              stroke="#5a5047" strokeWidth="1" />
             <text
-              x={tx + nx * (tickLen + 7)} y={ty + ny * (tickLen + 7) + 1}
-              textAnchor="middle" className="font-en" fontSize="7" fontWeight="600" fill="#8A7F72">{i}</text>
+              x={tx + nx * (tickLen + 8)} y={ty + ny * (tickLen + 8) + 1}
+              textAnchor="middle" className="font-en" fontSize="10" fontWeight="700" fill="#5a5047">{i}</text>
           </g>
         );
       })}
@@ -1017,10 +1017,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           style={{ width: '100%', height: '100%', cursor: target && !isAutoPhase ? 'pointer' : 'default' }}
           onClick={!isAutoPhase ? handleSvgClick : undefined}
         >
-          {/* Grid */}
-          {Array.from({ length: 14 }, (_, i) => Array.from({ length: 8 }, (_, j) => (
-            <circle key={`g${i}-${j}`} cx={20 + i * 40} cy={20 + j * 40} r="1" fill="#E5E7EB" />
-          ))).flat()}
 
           {/* ═══ Task 1 ═══ */}
           {phase.startsWith('task1') && (
