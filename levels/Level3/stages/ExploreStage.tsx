@@ -16,6 +16,23 @@ const T1_TGT_A = { x: 310, y: 200 };
 const T1_TGT_B = { x: 510, y: 200 };
 const T1_LEN = 200; // 5 units
 
+/** Reusable 3-4-5 original triangle (原件) SVG fragment */
+const OriginalTriangle = ({ showDots = false }: { showDots?: boolean }) => (
+  <g>
+    <polygon points={`${T1_SRC_A.x},${T1_SRC_A.y} ${T1_SRC_B.x},${T1_SRC_B.y} ${T1_SRC_C.x},${T1_SRC_C.y}`}
+      fill="#98c1d9" fillOpacity="0.08" stroke="#3d5a80" strokeWidth={showDots ? 2.5 : 2} />
+    {showDots && <>
+      <circle cx={T1_SRC_A.x} cy={T1_SRC_A.y} r="4" fill="#3d5a80" />
+      <circle cx={T1_SRC_B.x} cy={T1_SRC_B.y} r="4" fill="#3d5a80" />
+      <circle cx={T1_SRC_C.x} cy={T1_SRC_C.y} r="4" fill="#3d5a80" />
+    </>}
+    <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y - 12} textAnchor="middle" className="font-en" fontSize="11" fontWeight="700" fill="#3d5a80">5</text>
+    <text x={(T1_SRC_A.x + T1_SRC_C.x) / 2 - 10} y={(T1_SRC_A.y + T1_SRC_C.y) / 2} textAnchor="end" className="font-en" fontSize="11" fontWeight="700" fill="#3d5a80">3</text>
+    <text x={(T1_SRC_B.x + T1_SRC_C.x) / 2 + 10} y={(T1_SRC_B.y + T1_SRC_C.y) / 2} textAnchor="start" className="font-en" fontSize="11" fontWeight="700" fill="#3d5a80">4</text>
+    <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y + 40} textAnchor="middle" fontSize="12" fontWeight="900" fill="#3d5a80">原件</text>
+  </g>
+);
+
 // SSS: a=6, b=5, c=4 (units), 1 unit = 40px
 const UNIT = 40;
 const SSS_VALS = { a: 5, b: 3, c: 4 };
@@ -99,16 +116,25 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
   const nx = -dy / len;
   const ny = dx / len;
   const rulerW = 24;
+  // Extend beyond 0 and 5 marks so it looks like a real ruler
+  const overshoot = 14;
+  const bodyStart = { x: from.x - ux * overshoot, y: from.y - uy * overshoot };
+  const bodyEnd = { x: rulerEnd.x + ux * overshoot, y: rulerEnd.y + uy * overshoot };
   return (
     <g style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
-      <polygon
-        points={`${from.x},${from.y} ${rulerEnd.x},${rulerEnd.y} ${rulerEnd.x + nx * rulerW},${rulerEnd.y + ny * rulerW} ${from.x + nx * rulerW},${from.y + ny * rulerW}`}
+      {/* Ruler body with rounded ends */}
+      <rect
+        x={0} y={0}
+        width={Math.sqrt((bodyEnd.x - bodyStart.x) ** 2 + (bodyEnd.y - bodyStart.y) ** 2)}
+        height={rulerW}
+        rx="4" ry="4"
         fill="#e8e5dc" fillOpacity="0.7" stroke="#B0A898" strokeWidth="1"
+        transform={`translate(${bodyStart.x},${bodyStart.y}) rotate(${Math.atan2(bodyEnd.y - bodyStart.y, bodyEnd.x - bodyStart.x) * 180 / Math.PI})`}
       />
       <line x1={from.x} y1={from.y} x2={rulerEnd.x} y2={rulerEnd.y} stroke="#3d5a80" strokeWidth="1" opacity="0.4" />
       {Array.from({ length: units + 1 }, (_, i) => {
         const t = i / units;
-        const tickLen = rulerW * 0.45;
+        const tickLen = rulerW * 0.3;
         const tx = from.x + ux * rulerLen * t;
         const ty = from.y + uy * rulerLen * t;
         return (
@@ -118,8 +144,8 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
               x2={tx + nx * tickLen} y2={ty + ny * tickLen}
               stroke="#8A7F72" strokeWidth="0.7" />
             <text
-              x={tx + nx * (tickLen + 3)} y={ty + ny * (tickLen + 3) + 1}
-              textAnchor="middle" fontSize="7" fontWeight="600" fill="#8A7F72">{i}</text>
+              x={tx + nx * (tickLen + 7)} y={ty + ny * (tickLen + 7) + 1}
+              textAnchor="middle" className="font-en" fontSize="7" fontWeight="600" fill="#8A7F72">{i}</text>
           </g>
         );
       })}
@@ -246,9 +272,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const pzDragRef = useRef<{ seg: '3' | '4'; startMouse: Point; startP1: Point; startP2: Point } | null>(null);
   const pzSvgRef = useRef<SVGSVGElement>(null);
 
-  // Uniqueness state (task2-locked / task2-unlocked)
-  const UQ_P = { x: 80, y: 250 };
-  const UQ_Q = { x: 280, y: 250 };
+  // Uniqueness state (task2-locked / task2-unlocked) — right side of split layout
+  const UQ_P = { x: 310, y: 200 };
+  const UQ_Q = { x: 510, y: 200 };
   const uqD = 200; // dist P-Q
   const uqA2 = (120 * 120 - 160 * 160 + uqD * uqD) / (2 * uqD); // 72
   const uqH = Math.sqrt(120 * 120 - uqA2 * uqA2); // 96
@@ -571,7 +597,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
         {/* ═══ Puzzle: drag segments freely, snap to base endpoints ═══ */}
         {(phase === 'task2-puzzle' || phase === 'task2-puzzle-drag') && (() => {
-          const SNAP = 24;
+          const SNAP = 14;
           const seg3Len = 3 * UNIT; // 120px
           const seg4Len = 4 * UNIT; // 160px
           const toSvg = (e: React.PointerEvent): Point | null => {
@@ -586,7 +612,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           const onDown = (e: React.PointerEvent, seg: '3' | '4') => {
             if (pzClosed) return;
             e.preventDefault(); e.stopPropagation();
-            (e.target as Element).setPointerCapture(e.pointerId);
+            // Capture on SVG so onPointerMove/onPointerUp on SVG still fire
+            pzSvgRef.current?.setPointerCapture(e.pointerId);
             const pt = toSvg(e);
             if (!pt) return;
             const cur = seg === '3' ? pz3 : pz4;
@@ -613,7 +640,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 const otherSeg = d.seg === '3' ? pz4 : pz3;
                 const otherTarget = d.seg === '3' ? PZ_BASE_R : PZ_BASE_L;
                 const otherFree = otherSnap === 'p1' ? otherSeg.p2 : otherSeg.p1;
-                if (dist(free, otherFree) < 16) {
+                if (dist(free, otherFree) < 10) {
                   const avg = { x: (free.x + otherFree.x) / 2, y: (free.y + otherFree.y) / 2 };
                   setCur(snap === 'p1' ? { p1: target, p2: avg } : { p1: avg, p2: target });
                   const setOther = d.seg === '3' ? setPz4 : setPz3;
@@ -654,12 +681,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   onPointerMove={phase === 'task2-puzzle-drag' ? onMove : undefined} onPointerUp={phase === 'task2-puzzle-drag' ? onUp : undefined} onPointerLeave={phase === 'task2-puzzle-drag' ? onUp : undefined}>
 
                   {/* Left: original triangle */}
-                  <polygon points={`${T1_SRC_A.x},${T1_SRC_A.y} ${T1_SRC_B.x},${T1_SRC_B.y} ${T1_SRC_C.x},${T1_SRC_C.y}`}
-                    fill="#98c1d9" fillOpacity="0.08" stroke="#3d5a80" strokeWidth="2" />
-                  <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y + 16} textAnchor="middle" fontSize="11" fontWeight="700" fill="#3d5a80">5</text>
-                  <text x={(T1_SRC_A.x + T1_SRC_C.x) / 2 - 10} y={(T1_SRC_A.y + T1_SRC_C.y) / 2} textAnchor="end" fontSize="11" fontWeight="700" fill="#3d5a80">3</text>
-                  <text x={(T1_SRC_B.x + T1_SRC_C.x) / 2 + 10} y={(T1_SRC_B.y + T1_SRC_C.y) / 2} textAnchor="start" fontSize="11" fontWeight="700" fill="#3d5a80">4</text>
-                  <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y + 40} textAnchor="middle" fontSize="12" fontWeight="900" fill="#3d5a80">原件</text>
+                  <OriginalTriangle />
 
                   {phase !== 'task2-puzzle-drag' ? (
                     <>
@@ -767,14 +789,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           return (
             <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
               <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}>
-                {/* Triangle (shakes together) */}
+                {/* Left: original triangle (原件) */}
+                <OriginalTriangle />
+
+                {/* Right: triangle (shakes together) */}
                 <polygon points={`${pShk.x},${pShk.y} ${qShk.x},${qShk.y} ${uqR.x},${uqR.y}`} fill="#98c1d9" fillOpacity={0.1} stroke="#3d5a80" strokeWidth={1.5} />
                 <text x={(pShk.x + qShk.x) / 2} y={pShk.y + 18} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
                 <text x={(pShk.x + uqR.x) / 2 - 14} y={(pShk.y + uqR.y) / 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">3</text>
                 <text x={(qShk.x + uqR.x) / 2 + 14} y={(qShk.y + uqR.y) / 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">4</text>
                 {/* All 3 draggable vertices (no labels, just dots) */}
                 {[pShk, qShk, uqR].map((pt, i) => (
-                  <circle key={i} cx={pt.x} cy={pt.y} r={8} fill="white" stroke="#3d5a80" strokeWidth={2}
+                  <circle key={i} cx={pt.x} cy={pt.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
                     style={{ cursor: 'grab' }} onPointerDown={onDownL} onPointerMove={onMoveL} onPointerUp={onUpL} />
                 ))}
               </svg>
@@ -813,7 +838,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!uqDragRef.current) return;
             const pt = toSvg(e);
             if (!pt) return;
-            const clamped = { x: Math.max(30, Math.min(520, pt.x)), y: Math.max(30, Math.min(280, pt.y)) };
+            const clamped = { x: Math.max(280, Math.min(540, pt.x)), y: Math.max(30, Math.min(290, pt.y)) };
             if (uqDragRef.current === 'p') setUqP(clamped);
             else if (uqDragRef.current === 'q') setUqQ(clamped);
             else setUqR(clamped);
@@ -839,22 +864,25 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           return (
             <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
               <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}>
-                {/* Ghost original (fixed position) */}
+                {/* Left: original triangle (原件) */}
+                <OriginalTriangle />
+
+                {/* Right: ghost original (fixed position, dashed) */}
                 <polygon points={`${UQ_P.x},${UQ_P.y} ${UQ_Q.x},${UQ_Q.y} ${UQ_R_FIXED.x},${UQ_R_FIXED.y}`}
                   fill="#98c1d9" fillOpacity={0.12} stroke="#98c1d9" strokeWidth={1} strokeDasharray="4 3" />
-                {/* Current triangle */}
-                <line x1={uqP.x} y1={uqP.y} x2={uqQ.x} y2={uqQ.y} stroke={aOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={aOk ? undefined : '4 3'} />
-                <line x1={uqP.x} y1={uqP.y} x2={uqR.x} y2={uqR.y} stroke={bOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={bOk ? undefined : '4 3'} />
-                <line x1={uqQ.x} y1={uqQ.y} x2={uqR.x} y2={uqR.y} stroke={cOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={cOk ? undefined : '4 3'} />
+                {/* Right: current triangle */}
+                <line x1={uqP.x} y1={uqP.y} x2={uqQ.x} y2={uqQ.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={aOk ? undefined : '4 3'} />
+                <line x1={uqP.x} y1={uqP.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={bOk ? undefined : '4 3'} />
+                <line x1={uqQ.x} y1={uqQ.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={cOk ? undefined : '4 3'} />
                 <text x={bMid.x} y={bMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={aOk ? '#3d5a80' : '#ee6c4d'}>{sA}</text>
                 <text x={lMid.x} y={lMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={bOk ? '#3d5a80' : '#ee6c4d'}>{sB}</text>
                 <text x={rMid.x} y={rMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={cOk ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
                 {/* All 3 draggable vertices */}
-                <circle cx={uqP.x} cy={uqP.y} r={8} fill="white" stroke={aOk && bOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={2}
+                <circle cx={uqP.x} cy={uqP.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
                   style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} onPointerMove={onMoveU} onPointerUp={onUpU} />
-                <circle cx={uqQ.x} cy={uqQ.y} r={8} fill="white" stroke={aOk && cOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={2}
+                <circle cx={uqQ.x} cy={uqQ.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
                   style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'q')} onPointerMove={onMoveU} onPointerUp={onUpU} />
-                <circle cx={uqR.x} cy={uqR.y} r={8} fill="white" stroke={bOk && cOk ? '#3d5a80' : '#ee6c4d'} strokeWidth={2}
+                <circle cx={uqR.x} cy={uqR.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
                   style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'r')} onPointerMove={onMoveU} onPointerUp={onUpU} />
               </svg>
               {uqShowHint && (
@@ -997,21 +1025,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           {/* ═══ Task 1 ═══ */}
           {phase.startsWith('task1') && (
             <>
-              {/* 3-4-5 triangle (原件) */}
-              <polygon points={`${T1_SRC_A.x},${T1_SRC_A.y} ${T1_SRC_B.x},${T1_SRC_B.y} ${T1_SRC_C.x},${T1_SRC_C.y}`}
-                fill="#98c1d9" fillOpacity="0.08" stroke="#3d5a80" strokeWidth="2.5" />
-              <circle cx={T1_SRC_A.x} cy={T1_SRC_A.y} r="4" fill="#3d5a80" />
-              <circle cx={T1_SRC_B.x} cy={T1_SRC_B.y} r="4" fill="#3d5a80" />
-              <circle cx={T1_SRC_C.x} cy={T1_SRC_C.y} r="4" fill="#3d5a80" />
-              {/* Side labels */}
-              <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2 - 20} y={T1_SRC_A.y - 20 + 4}
-                textAnchor="middle" fontSize="11" fontWeight="700" fill="#3d5a80">5</text>
-              <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y + 60}
-                textAnchor="middle" fontSize="13" fontWeight="900" fill="#3d5a80">原件</text>
-              <text x={(T1_SRC_A.x + T1_SRC_C.x) / 2 - 10} y={(T1_SRC_A.y + T1_SRC_C.y) / 2}
-                textAnchor="end" fontSize="11" fontWeight="700" fill="#3d5a80">3</text>
-              <text x={(T1_SRC_B.x + T1_SRC_C.x) / 2 + 10} y={(T1_SRC_B.y + T1_SRC_C.y) / 2}
-                textAnchor="start" fontSize="11" fontWeight="700" fill="#3d5a80">4</text>
+              <OriginalTriangle showDots />
 
               {/* Ruler measuring source base */}
               {phase === 'task1-ruler-src' && (
@@ -1040,20 +1054,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           {/* Task 1 left-side result persists during Task 2 & 3 */}
           {(phase.startsWith('task2') || phase.startsWith('task3')) && !isDialog && (
             <>
-              {/* 3-4-5 triangle */}
-              <polygon points={`${T1_SRC_A.x},${T1_SRC_A.y} ${T1_SRC_B.x},${T1_SRC_B.y} ${T1_SRC_C.x},${T1_SRC_C.y}`}
-                fill="#98c1d9" fillOpacity="0.08" stroke="#3d5a80" strokeWidth="2.5" />
-              <circle cx={T1_SRC_A.x} cy={T1_SRC_A.y} r="4" fill="#3d5a80" />
-              <circle cx={T1_SRC_B.x} cy={T1_SRC_B.y} r="4" fill="#3d5a80" />
-              <circle cx={T1_SRC_C.x} cy={T1_SRC_C.y} r="4" fill="#3d5a80" />
-              <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2 - 20} y={T1_SRC_A.y - 20 + 4}
-                textAnchor="middle" fontSize="11" fontWeight="700" fill="#3d5a80">5</text>
-              <text x={(T1_SRC_A.x + T1_SRC_B.x) / 2} y={T1_SRC_A.y + 60}
-                textAnchor="middle" fontSize="13" fontWeight="900" fill="#3d5a80">原件</text>
-              <text x={(T1_SRC_A.x + T1_SRC_C.x) / 2 - 10} y={(T1_SRC_A.y + T1_SRC_C.y) / 2}
-                textAnchor="end" fontSize="11" fontWeight="700" fill="#3d5a80">3</text>
-              <text x={(T1_SRC_B.x + T1_SRC_C.x) / 2 + 10} y={(T1_SRC_B.y + T1_SRC_C.y) / 2}
-                textAnchor="start" fontSize="11" fontWeight="700" fill="#3d5a80">4</text>
+              <OriginalTriangle showDots />
               {/* Copied base line */}
               <line x1={T1_TGT_A.x} y1={T1_TGT_A.y} x2={T1_TGT_B.x} y2={T1_TGT_B.y}
                 stroke="#94A3B8" strokeWidth="2.5" />
