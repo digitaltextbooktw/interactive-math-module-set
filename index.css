@@ -1,0 +1,286 @@
+:root {
+  /* 基礎色票 */
+  --color-bg: #EEEEEE;
+  --color-primary: #3d5a80;
+  --color-secondary: #98c1d9;
+  --color-accent: #ee6c4d;
+  --color-dark: #293241;
+  --color-light: #e0fbfc;
+
+  /* 第 1 關場景色 */
+  --level1-bg: #FEF3C7;
+  --level1-wood: #D4A574;
+  --level1-glow: #FB923C;
+
+  /* 角色色 */
+  --char-xiaojin: #FBBF24;
+  --char-laojiao: #FB923C;
+
+  /* 字體 */
+  --font-main: 'Noto Sans TC', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #1a1a2e;
+  font-family: var(--font-main);
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100dvh;
+}
+
+/* === Game Container: always fill viewport === */
+.game-container {
+  width: 100vw;
+  height: 100dvh;
+}
+
+/* 角色浮動動畫 */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.char-float {
+  animation: float 2s ease-in-out infinite;
+}
+
+/* 打字機游標閃爍 */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  animation: blink 0.8s step-end infinite;
+}
+
+/* 點擊繼續提示閃爍 */
+@keyframes pulse-hint {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.click-hint {
+  animation: pulse-hint 1.5s ease-in-out infinite;
+}
+
+/* 按鈕 stagger 入場 */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-in {
+  animation: slideUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* 問號晃動 */
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+.wobble {
+  animation: wobble 1.5s ease-in-out infinite;
+}
+
+/* === Title Screen Animations === */
+/*
+  Timeline:
+  0s      background visible (instant)
+  0.3s    particles fade in + start drifting
+  0.6s    planet fades in (opacity only), spin already running
+  1.2s    title fades in, shimmer starts
+  1.6s    button 1 fades in
+  1.8s    button 2 fades in
+  2.1s    button 1 pulse glow starts
+*/
+
+/* Particles: fade in once, then drift forever via custom properties */
+@keyframes titleParticleFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes titleParticleDrift {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(var(--drift-x, 20px), var(--drift-y, -20px)); }
+}
+
+/* Planet wrapper: simple opacity fade (no scale — scale fights with spin) */
+@keyframes titlePlanetFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Planet body continuous spin */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Shield ring counter-spin */
+@keyframes spinReverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* Triangle surface breathing — stagger via (i % 7) * 0.5s so max offset = 3s */
+@keyframes titleBreathe {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* Title text fade in */
+@keyframes titleTextFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Title shimmer — starts at 1.2s via animation-delay on .title-shimmer */
+.title-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 40%,
+    #98c1d9 50%,
+    #ffffff 60%,
+    #ffffff 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleShimmer 3s ease-in-out 1.8s infinite;
+}
+
+@keyframes titleShimmer {
+  0%, 100% { background-position: 200% center; }
+  50%      { background-position: -200% center; }
+}
+
+/* Buttons fade in */
+@keyframes titleBtnFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Start button pulse glow */
+@keyframes titlePulseGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(238, 108, 77, 0.25); }
+  50%      { box-shadow: 0 0 28px rgba(238, 108, 77, 0.55); }
+}
+
+/* Xiaojin entrance bounce */
+@keyframes bounceIn {
+  0% { transform: translateX(100px); opacity: 0; }
+  40% { transform: translateX(0) translateY(-6px); opacity: 1; }
+  55% { transform: translateX(0) translateY(0); }
+  70% { transform: translateX(0) translateY(-4px); }
+  82% { transform: translateX(0) translateY(0); }
+  90% { transform: translateX(0) translateY(-2px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+.xiaojin-entrance {
+  animation: bounceIn 0.8s ease-out forwards;
+}
+
+/* === Opening Animation === */
+
+@keyframes openingShake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-3px, 2px); }
+  30% { transform: translate(3px, -2px); }
+  45% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  75% { transform: translate(-2px, 1px); }
+  90% { transform: translate(1px, -1px); }
+}
+
+@keyframes openingDebris {
+  0% {
+    opacity: 0.9;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--debris-dx, 80px), var(--debris-dy, -80px)) rotate(var(--debris-rot, 90deg));
+  }
+}
+
+/* === Level Map === */
+
+/* Route dash flowing animation */
+@keyframes dashFlow {
+  to { stroke-dashoffset: -28; }
+}
+
+/* Route drawing animation (stroke reveals from start to end) */
+@keyframes routeDraw {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Locked node shake */
+@keyframes nodeShake {
+  0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)); }
+  20% { transform: translate(calc(var(--tx, 0) + 4px), var(--ty, 0)); }
+  40% { transform: translate(calc(var(--tx, 0) - 4px), var(--ty, 0)); }
+  60% { transform: translate(calc(var(--tx, 0) + 3px), var(--ty, 0)); }
+  80% { transform: translate(calc(var(--tx, 0) - 2px), var(--ty, 0)); }
+}
+
+/* === Level 1 === */
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-30px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes protractorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes traceStroke {
+  0% { stroke-dashoffset: 480; opacity: 0.5; }
+  90% { stroke-dashoffset: 0; opacity: 0.5; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+@keyframes traceDot {
+  0% { offset-distance: 0%; opacity: 1; }
+  90% { offset-distance: 100%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes glowFill {
+  0% { fill-opacity: 0; filter: blur(8px); }
+  30% { fill-opacity: 0.25; filter: blur(4px); }
+  60% { fill-opacity: 0.15; filter: blur(1px); }
+  100% { fill-opacity: 0.08; filter: blur(0px); }
+}

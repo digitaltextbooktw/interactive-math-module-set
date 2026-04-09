@@ -17,6 +17,8 @@ import Level1Explore from './levels/Level1/stages/ExploreStage';
 import Level1Quiz from './levels/Level1/stages/QuizStage';
 import Level2Explore from './levels/Level2/stages/ExploreStage';
 import Level2Quiz from './levels/Level2/stages/QuizStage';
+import Level3Explore from './levels/Level3/stages/Level3Explore';
+import Level3Quiz from './levels/Level3/stages/QuizStage';
 
 // Map module id → practice components (only for modules that have practice content)
 const practiceMap: Record<string, {
@@ -30,6 +32,10 @@ const practiceMap: Record<string, {
     'exterior-angle': {
         Explore: Level2Explore,
         Quiz: Level2Quiz,
+    },
+    'congruence': {
+        Explore: Level3Explore,
+        Quiz: Level3Quiz,
     },
 };
 
