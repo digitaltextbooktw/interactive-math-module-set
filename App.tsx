@@ -15,7 +15,7 @@ import { BookIcon, LightbulbIcon, ChevronLeftIcon } from './components/icons';
 import PracticeShell from './components/practice/PracticeShell';
 import Level1Explore from './levels/Level1/stages/ExploreStage';
 import Level1Quiz from './levels/Level1/stages/QuizStage';
-import Level2Explore from './levels/Level2/stages/ExploreStage';
+import Level2Explore from './levels/Level2/stages/Level2Explore';
 import Level2Quiz from './levels/Level2/stages/QuizStage';
 import Level3Explore from './levels/Level3/stages/Level3Explore';
 import Level3Quiz from './levels/Level3/stages/QuizStage';
