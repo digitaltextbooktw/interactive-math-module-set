@@ -206,9 +206,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           {/* Draggable vertices with labels inside */}
           {pts.map((p, i) => {
             const label = ['A', 'B', 'C'][i];
-            const isC = i === 2;
-            const strokeColor = draggingIdx === i ? '#ee6c4d' : isC ? '#ee6c4d' : '#3d5a80';
-            const fillColor = isC ? '#ee6c4d' : '#3d5a80';
+            const strokeColor = draggingIdx === i ? '#ee6c4d' : '#3d5a80';
+            const fillColor = '#3d5a80';
             return (
               <g key={i}
                 onMouseDown={(e) => handleStart(e, i)}
