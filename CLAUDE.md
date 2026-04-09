@@ -7,7 +7,7 @@
 - **Framework**: React 19 + TypeScript
 - **Build**: Vite (dev server port 3000)
 - **Styling**: Tailwind CSS (CDN), inline styles
-- **Fonts**: Zen Maru Gothic (主字體 `--font-main`), Nunito (數字/英文 `--font-en` / `.font-en`)
+- **Fonts**: 源泉圓體 GenSenRounded (主字體 `--font-main`, emfont CDN), Nunito (數字/英文 `--font-en` / `.font-en`), Noto Sans TC (備用)
 - **No state management library** — 使用 React useState/useEffect
 
 ## Commands
@@ -42,9 +42,17 @@ components/
   practice/
     PracticeShell.tsx        # 練習模式外殼（操作探索 + 概念檢核）
 
-levels/                      # 各模組的練習關卡
-  Level1/                    # 三角形的角
+levels/                      # 各模組的練習關卡（含 stages/ 子資料夾）
+  Level1/                    # 三角形的角（Explore → Guess → Reveal → Quiz → Result）
+    components/              # CharacterAvatar, DialogEngine
+    stages/                  # ExploreStage, GuessStage, RevealStage, QuizStage, ResultStage, TearAnimation
+    data.ts, index.tsx
   Level2/                    # 外角關係
+    stages/                  # ExploreStage, ExteriorAngleAnim, GuessStage, RevealStage, QuizStage, ResultStage
+    data.ts, index.tsx
+  Level3/                    # 全等判定（SSS/SAS/AAA）
+    stages/                  # ExploreStage, Level3Explore, RevealStage, QuizStage
+    data.ts
 
 store/gameState.ts           # 遊戲狀態管理
 utils/

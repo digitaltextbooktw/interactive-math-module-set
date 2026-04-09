@@ -225,7 +225,7 @@ const App: React.FC = () => {
                 <div className="flex bg-[#3d5a80] rounded-full p-1 shadow-lg ml-auto shrink-0">
                     <button
                         onClick={() => setPracticeMode(false)}
-                        className={`px-4 pb-2 pt-1.5 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
+                        className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
                             !practiceMode
                                 ? 'bg-[#e0fbfc] text-[#293241] shadow-md'
                                 : 'text-[#98c1d9] hover:text-[#e0fbfc]'
@@ -235,7 +235,7 @@ const App: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setPracticeMode(true)}
-                        className={`px-4 pb-2 pt-1.5 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
+                        className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
                             practiceMode
                                 ? 'bg-[#ee6c4d] text-white shadow-md'
                                 : 'text-[#98c1d9] hover:text-[#e0fbfc]'
