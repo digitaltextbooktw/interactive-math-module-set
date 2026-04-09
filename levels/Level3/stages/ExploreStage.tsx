@@ -46,14 +46,6 @@ const sssCosPAngle = (SSS_B ** 2 + SSS_A ** 2 - SSS_C ** 2) / (2 * SSS_B * SSS_A
 const sssSinPAngle = Math.sqrt(Math.max(0, 1 - sssCosPAngle ** 2));
 const SSS_TOP = { x: SSS_LEFT.x + SSS_B * sssCosPAngle, y: SSS_LEFT.y - SSS_B * sssSinPAngle };
 
-// SAS builds on the same copied base line
-const SAS_VALS = { a: 5, b: 4, angle: 50 };
-const SAS_A_PX = SAS_VALS.a * UNIT;
-const SAS_B_PX = SAS_VALS.b * UNIT;
-const SAS_LEFT = T1_TGT_A;
-const SAS_RIGHT = T1_TGT_B;
-const sasRad = SAS_VALS.angle * Math.PI / 180;
-const SAS_TOP = { x: SAS_LEFT.x + SAS_B_PX * Math.cos(sasRad), y: SAS_LEFT.y - SAS_B_PX * Math.sin(sasRad) };
 
 // ═══ Animated Compass ═══
 // needle = fixed point, pencilTarget = where pencil should go
@@ -153,26 +145,6 @@ function RulerTool({ from, to }: { from: Point; to: Point }) {
   );
 }
 
-// ═══ Protractor ═══
-function ProtractorTool({ center, angle }: { center: Point; angle: number }) {
-  const r = 40;
-  return (
-    <g style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
-      <path d={`M ${center.x + r},${center.y} A ${r},${r} 0 0,0 ${center.x - r},${center.y}`}
-        fill="#fef3c7" fillOpacity="0.5" stroke="#d97706" strokeWidth="1" />
-      {[0, 30, 60, 90, 120, 150, 180].map(deg => {
-        const rad = deg * Math.PI / 180;
-        return (
-          <line key={deg}
-            x1={center.x + r * 0.75 * Math.cos(-rad)} y1={center.y + r * 0.75 * Math.sin(-rad)}
-            x2={center.x + r * Math.cos(-rad)} y2={center.y + r * Math.sin(-rad)}
-            stroke="#d97706" strokeWidth="0.8" opacity="0.6" />
-        );
-      })}
-      <text x={center.x + 12} y={center.y - r + 5} fontSize="9" fill="#d97706" fontWeight="700">{angle}°</text>
-    </g>
-  );
-}
 
 // ═══ Phases ═══
 type Phase =
@@ -202,43 +174,73 @@ type Phase =
   | 'task2-locked'                                                   // locked drag: R can't move
   | 'task2-unlocked'                                                 // free drag: R moves, not congruent
   | 'task2-sss-done'                                                 // conclusion card
-  // Task 3: SAS
-  | 'task3-step0' | 'task3-step1' | 'task3-step2' | 'task3-step3';
+;
 
 const TASK_NAMES: Record<number, string> = {
   1: '複製線段',
   2: `SSS 作圖　已知三角形邊長分別為 ${SSS_VALS.a}、${SSS_VALS.b}、${SSS_VALS.c}`,
-  3: `SAS 作圖　已知：a = ${SAS_VALS.a}、b = ${SAS_VALS.b}、夾角 = ${SAS_VALS.angle}°`,
+};
+
+// Phase action types for consistent UI behavior
+type ActionType = 'info' | 'action' | 'drag' | 'auto';
+
+const PHASE_ACTION: Record<Phase, ActionType> = {
+  'task1-show': 'info',
+  'task1-ruler-src': 'info',
+  'task1-ruler-tgt': 'action',
+  'task1-done': 'info',
+  'task2-ruler': 'info',
+  'task2-pin': 'action',
+  'task2-step0': 'auto',
+  'task2-arc1': 'auto',
+  'task2-pin2': 'action',
+  'task2-open2': 'auto',
+  'task2-arc2': 'auto',
+  'task2-step2': 'action',
+  'task2-draw-l': 'action',
+  'task2-done-l': 'info',
+  'task2-draw-r': 'action',
+  'task2-done-r': 'info',
+  'task2-congruent': 'auto',
+  'task2-question': 'info',
+  'task2-puzzle': 'info',
+  'task2-puzzle-drag': 'drag',
+  'task2-locked': 'drag',
+  'task2-unlocked': 'drag',
+  'task2-sss-done': 'info',
+};
+
+const ACTION_LABELS: Record<ActionType, { text: string; bg: string; color: string }> = {
+  info:   { text: '說明', bg: '#F1F5F9', color: '#64748B' },
+  action: { text: '動作', bg: '#FFF7ED', color: '#EA580C' },
+  drag:   { text: '拖曳', bg: '#F0FDF4', color: '#16A34A' },
+  auto:   { text: '播放', bg: '#EFF6FF', color: '#3B82F6' },
 };
 
 const STEP_HINTS: Record<string, string> = {
-  'task1-show': '這是原件——一個 3、4、5 的直角三角形。先來複製底邊！',
-  'task1-ruler-src': '用直尺量出底邊長度 = 5',
-  'task1-ruler-tgt': '把直尺移到右邊，點擊目標起點畫出長度 5 的線段',
-  'task1-done': '底邊複製完成！',
-  'task2-ruler': `底邊已複製好了（長度 ${SSS_VALS.a}）。用直尺量出 ${SSS_VALS.b}`,
-  'task2-pin': '把圓規的針腳釘在左端點上',
-  'task2-step0': `圓規已張開到 ${SSS_VALS.b}，點擊畫弧`,
-  'task2-arc1': `半徑 ${SSS_VALS.b} 的弧畫好了！`,
-  'task2-pin2': '把圓規的針腳釘在右端點上',
-  'task2-open2': `圓規已張開到 ${SSS_VALS.c}，點擊畫弧`,
-  'task2-arc2': `半徑 ${SSS_VALS.c} 的弧畫好了！`,
-  'task2-step2': '兩弧的交叉點就是第三個頂點 → 點擊交叉點',
-  'task2-draw-l': '用直尺把左邊連起來 → 點擊頂點',
-  'task2-done-l': '左邊畫好了！',
-  'task2-draw-r': '用直尺把右邊連起來 → 點擊頂點',
-  'task2-done-r': 'SSS 三角形完成！',
-  'task2-congruent': '三邊相等，形狀完全一樣——這就是 SSS 全等！',
-  'task2-question': '為什麼三條邊一樣就一定全等？',
-  'task2-puzzle': '這是三條邊長分別為 3、4、5 的線段',
-  'task2-puzzle-drag': '把 3 和 4 拖到 5 的兩個端點上，拼出三角形',
-  'task2-locked': '邊長被鎖定了（3、4、5）。試著拖動任何一個頂點看看？',
-  'task2-unlocked': '現在邊長可以變了，拖動頂點看看',
-  'task2-sss-done': 'SSS 全等性質確認完成！',
-  'task3-step0': '用直尺畫底邊 a → 點擊左端點',
-  'task3-step1': `用量角器在左端點量出 ${SAS_VALS.angle}° → 點擊左端點`,
-  'task3-step2': `沿著角度方向，用圓規量 b = ${SAS_VALS.b} → 點擊頂點`,
-  'task3-step3': '用直尺連接右端點和頂點 → 點擊頂點',
+  'task1-show':        '這是 3-4-5 直角三角形（原件）。來複製底邊吧！',
+  'task1-ruler-src':   '直尺量出底邊 = 5',
+  'task1-ruler-tgt':   '→ 點擊右側的起點，畫出底邊',
+  'task1-done':        '底邊複製完成！',
+  'task2-ruler':       `直尺量出左邊 = ${SSS_VALS.b}`,
+  'task2-pin':         '→ 點擊左端點，釘上圓規',
+  'task2-step0':       '圓規張開中⋯⋯',
+  'task2-arc1':        '畫弧中⋯⋯',
+  'task2-pin2':        '→ 點擊右端點，釘上圓規',
+  'task2-open2':       '圓規張開中⋯⋯',
+  'task2-arc2':        '畫弧中⋯⋯',
+  'task2-step2':       '→ 點擊兩弧的交叉點（第三頂點）',
+  'task2-draw-l':      '→ 點擊頂點，用直尺連左邊',
+  'task2-done-l':      '左邊連好了！',
+  'task2-draw-r':      '→ 點擊頂點，用直尺連右邊',
+  'task2-done-r':      'SSS 三角形完成！',
+  'task2-congruent':   '三邊相等 → 形狀完全一樣 = SSS 全等！',
+  'task2-question':    '為什麼三條邊一樣就一定全等？',
+  'task2-puzzle':      '三條邊長分別為 3、4、5 的線段',
+  'task2-puzzle-drag': '拖動 3 和 4 到底邊的端點上',
+  'task2-locked':      '邊長鎖定了！拖動頂點試試？',
+  'task2-unlocked':    '邊長可以變了，自由拖動頂點看看',
+  'task2-sss-done':    'SSS 全等性質確認完成！',
 };
 
 export default function ExploreStage({ onComplete }: { onComplete: () => void }) {
@@ -246,6 +248,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const [compassSpread, setCompassSpread] = useState(0);
   const [arcSweep, setArcSweep] = useState(0); // 0→1 for arc drawing animation
   const [congruentDone, setCongruentDone] = useState(false); // after trace animation completes
+  const [animDone, setAnimDone] = useState(false); // tracks whether auto-phase animation finished
 
   // Task 1
   const [t1Done, setT1Done] = useState(false);
@@ -289,10 +292,11 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const uqDragCount = useRef(0);
   const uqSvgRef = useRef<SVGSVGElement>(null);
 
-  // Task 3
-  const [sasRayShown, setSasRayShown] = useState(false);
-  const [sasVertex, setSasVertex] = useState<Point | null>(null);
-  const [sasLines, setSasLines] = useState<{ from: Point; to: Point }[]>([]);
+
+  // Reset animDone when phase changes
+  useEffect(() => {
+    setAnimDone(false);
+  }, [phase]);
 
   // Compass opening animation for task2-step0
   useEffect(() => {
@@ -303,7 +307,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     const id = setInterval(() => {
       frame++;
       setCompassSpread(Math.min(1, frame / total));
-      if (frame >= total) clearInterval(id);
+      if (frame >= total) { clearInterval(id); setAnimDone(true); }
     }, 16);
     return () => clearInterval(id);
   }, [phase]);
@@ -322,6 +326,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         clearInterval(id);
         if (!cancelled) {
           setSssArcs([{ center: SSS_LEFT, radius: SSS_B }]);
+          setAnimDone(true);
         }
       }
     }, 16);
@@ -337,7 +342,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     const id = setInterval(() => {
       frame++;
       setCompassSpread(Math.min(1, frame / total));
-      if (frame >= total) clearInterval(id);
+      if (frame >= total) { clearInterval(id); setAnimDone(true); }
     }, 16);
     return () => clearInterval(id);
   }, [phase]);
@@ -356,6 +361,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         clearInterval(id);
         if (!cancelled) {
           setSssArcs(prev => prev.length < 2 ? [...prev, { center: SSS_RIGHT, radius: SSS_C }] : prev);
+          setAnimDone(true);
         }
       }
     }, 16);
@@ -366,13 +372,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   useEffect(() => {
     if (phase !== 'task2-congruent') { setCongruentDone(false); return; }
     setCongruentDone(false);
-    const timer = setTimeout(() => setCongruentDone(true), 3500);
+    const timer = setTimeout(() => { setCongruentDone(true); setAnimDone(true); }, 3500);
     return () => clearTimeout(timer);
   }, [phase]);
-
-  const handleDialogDone = useCallback(() => {
-    // No more dialog phases — this is kept for safety
-  }, [phase, onComplete]);
 
   const handleSvgClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
@@ -384,59 +386,45 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     const click = { x: svgPt.x, y: svgPt.y };
 
     // Task 1
-    if (phase === 'task1-ruler-tgt' && dist(click, T1_TGT_A) < 30) {
+    if (phase === 'task1-ruler-tgt' && dist(click, T1_TGT_A) < 40) {
       setT1Done(true); playSound('success'); setPhase('task1-done');
     }
 
-    // Task 2: ruler → left arc (b=3) → right arc (c=4) → vertex → connect left → connect right
-    if (phase === 'task2-pin' && click.x >= SSS_LEFT.x - 30 && click.x <= SSS_RIGHT.x + 30) {
+    // Task 2: pin → arc → vertex → connect
+    if (phase === 'task2-pin' && dist(click, SSS_LEFT) < 40) {
       playSound('click'); setPhase('task2-step0');
-    } else if (phase === 'task2-step0' && click.x >= SSS_LEFT.x - 30 && click.x <= SSS_RIGHT.x + 30) {
-      playSound('click'); setPhase('task2-arc1');
-    } else if (phase === 'task2-pin2' && click.x >= SSS_LEFT.x - 30 && click.x <= SSS_RIGHT.x + 30) {
+    } else if (phase === 'task2-pin2' && dist(click, SSS_RIGHT) < 40) {
       playSound('click'); setPhase('task2-open2');
-    } else if (phase === 'task2-open2' && click.x >= SSS_LEFT.x - 30 && click.x <= SSS_RIGHT.x + 30) {
-      playSound('click'); setPhase('task2-arc2');
-    } else if (phase === 'task2-step2' && dist(click, SSS_TOP) < 35) {
+    } else if (phase === 'task2-step2' && dist(click, SSS_TOP) < 40) {
       setSssVertex(SSS_TOP); playSound('click'); setPhase('task2-draw-l');
-    } else if (phase === 'task2-draw-l' && dist(click, SSS_TOP) < 35) {
+    } else if (phase === 'task2-draw-l' && dist(click, SSS_TOP) < 40) {
       setSssLines(prev => [...prev, { from: SSS_LEFT, to: SSS_TOP }]); playSound('click'); setPhase('task2-done-l');
-    } else if (phase === 'task2-draw-r' && dist(click, SSS_TOP) < 35) {
+    } else if (phase === 'task2-draw-r' && dist(click, SSS_TOP) < 40) {
       setSssLines(prev => [...prev, { from: SSS_RIGHT, to: SSS_TOP }]);
       playSound('success'); setPhase('task2-done-r');
     }
 
-    // Task 3
-    if (phase === 'task3-step0' && dist(click, SAS_LEFT) < 30) {
-      setSasLines([{ from: SAS_LEFT, to: SAS_RIGHT }]); playSound('click'); setPhase('task3-step1');
-    } else if (phase === 'task3-step1' && dist(click, SAS_LEFT) < 30) {
-      setSasRayShown(true); playSound('click'); setPhase('task3-step2');
-    } else if (phase === 'task3-step2' && dist(click, SAS_TOP) < 35) {
-      setSasVertex(SAS_TOP); playSound('click'); setPhase('task3-step3');
-    } else if (phase === 'task3-step3' && dist(click, SAS_TOP) < 35) {
-      setSasLines(prev => [...prev, { from: SAS_LEFT, to: SAS_TOP }, { from: SAS_RIGHT, to: SAS_TOP }]);
-      playSound('success');
-      setTimeout(() => onComplete(), 1000);
-    }
   }, [phase, onComplete]);
-
-  const isAutoPhase = false;
 
   // Global step list across all tasks
   const ALL_STEPS: Phase[] = [
     'task1-show', 'task1-ruler-src', 'task1-ruler-tgt', 'task1-done',
     'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
     'task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
-    'task3-step0', 'task3-step1', 'task3-step2', 'task3-step3',
   ];
   const globalIdx = ALL_STEPS.indexOf(phase);
-  const canGoPrev = globalIdx > 0 && !isAutoPhase;
-  const canGoNext = globalIdx >= 0 && globalIdx < ALL_STEPS.length - 1 && !isAutoPhase;
+  const phaseAction = PHASE_ACTION[phase];
+  // Drag phases: show next button when task-specific condition is met
+  const dragDone = (phase === 'task2-puzzle-drag' && pzClosed)
+    || (phase === 'task2-locked' && uqShowBtn)
+    || (phase === 'task2-unlocked' && uqShowBtn);
+  const canGoPrev = globalIdx > 0;
+  const canGoNext = globalIdx >= 0 && globalIdx < ALL_STEPS.length - 1
+    && (phaseAction === 'info' || (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone));
 
   // Reset all state for a clean task switch
   const resetTask1 = () => { setT1Done(false); };
   const resetTask2 = () => { setSssLines([]); setSssArcs([]); setSssVertex(null); };
-  const resetTask3 = () => { setSasLines([]); setSasRayShown(false); setSasVertex(null); };
   const resetPuzzle = () => {
     setPzClosed(false);
     setPz3Snap(null); setPz4Snap(null);
@@ -476,23 +464,13 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     else if (target === 'task2-locked') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-unlocked') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-sss-done') { resetTask2(); resetPuzzle(); resetUnique(); }
-    // Task 3
-    else if (target === 'task3-step0') { resetTask3(); }
-    else if (target === 'task3-step1') { resetTask3(); setSasLines([{ from: SAS_LEFT, to: SAS_RIGHT }]); }
-    else if (target === 'task3-step2') { resetTask3(); setSasLines([{ from: SAS_LEFT, to: SAS_RIGHT }]); setSasRayShown(true); }
-    else if (target === 'task3-step3') { resetTask3(); setSasLines([{ from: SAS_LEFT, to: SAS_RIGHT }]); setSasRayShown(true); setSasVertex(SAS_TOP); }
   }, []);
-
-  // Phases that have useEffect animations — just set the phase, don't apply final state
-  const ANIM_PHASES: Phase[] = ['task2-step0', 'task2-open2'];
 
   const goToPrevStep = useCallback(() => {
     if (globalIdx <= 0) return;
-    // Skip over animation-only phases when going back
+    // Skip auto phases when going back
     let prevIdx = globalIdx - 1;
-    while (prevIdx > 0 && ANIM_PHASES.includes(ALL_STEPS[prevIdx])) {
-      prevIdx--;
-    }
+    while (prevIdx > 0 && PHASE_ACTION[ALL_STEPS[prevIdx]] === 'auto') prevIdx--;
     const prev = ALL_STEPS[prevIdx];
     applyStateForStep(prev);
     playSound('click');
@@ -502,26 +480,24 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const goToNextStep = useCallback(() => {
     if (globalIdx < 0 || globalIdx >= ALL_STEPS.length - 1) return;
     const next = ALL_STEPS[globalIdx + 1];
-    // For animation phases, set the base state first then let useEffect animate
     applyStateForStep(next);
     playSound('click');
     setPhase(next);
   }, [globalIdx, applyStateForStep]);
 
-  const isDialog = false;
-  const dialogLines = null;
+  const isLastStep = globalIdx === ALL_STEPS.length - 1;
+
   const hintText = STEP_HINTS[phase] ?? '';
-  const taskNum = phase.startsWith('task1') ? 1 : phase.startsWith('task2') ? 2 : 3;
+  const taskNum = phase.startsWith('task1') ? 1 : 2;
+  const actionLabel = (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone) ? ACTION_LABELS.info : ACTION_LABELS[phaseAction];
 
   const getTarget = (): Point | null => {
+    // Only show pulsing target for action phases (click-svg)
+    if (phaseAction !== 'action') return null;
     if (phase === 'task1-ruler-tgt') return T1_TGT_A;
     if (phase === 'task2-pin') return SSS_LEFT;
-    if (phase === 'task2-step0') return { x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y };
     if (phase === 'task2-pin2') return SSS_RIGHT;
-    if (phase === 'task2-open2') return { x: SSS_RIGHT.x - SSS_C, y: SSS_RIGHT.y };
     if (phase === 'task2-step2' || phase === 'task2-draw-l' || phase === 'task2-draw-r') return SSS_TOP;
-    if (phase === 'task3-step0' || phase === 'task3-step1') return SAS_LEFT;
-    if (phase === 'task3-step2' || phase === 'task3-step3') return SAS_TOP;
     return null;
   };
   const target = getTarget();
@@ -529,68 +505,26 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   // SSS exploration modules — full takeover with nav overlay
   const isModulePhase = ['task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done'].includes(phase);
   if (isModulePhase) {
-    const navBtnStyle: React.CSSProperties = {
-      height: 34, padding: '0 14px', borderRadius: 8,
-      border: '1.5px solid #D1D5DB', background: 'white', color: '#4B5563',
-      cursor: 'pointer', fontWeight: 700, fontSize: 14,
-      fontFamily: 'var(--font-main)',
-      display: 'flex', alignItems: 'center', gap: 4,
-    };
+    const moduleActionLabel = (phaseAction === 'drag' && dragDone) ? ACTION_LABELS.info : ACTION_LABELS[phaseAction];
+    const moduleHint = pzClosed && phase === 'task2-puzzle-drag' ? '拼好了！跟原件形狀完全一樣。' : hintText;
+    const moduleHintColor = pzClosed && phase === 'task2-puzzle-drag' ? '#10B981' : '#3d5a80';
     return (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-main)',
-        padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)', gap: 'clamp(6px, 1vmin, 10px)', boxSizing: 'border-box' }}>
-        {/* Module instruction bar with nav buttons */}
-        <div style={{
-          background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
-          padding: 'clamp(10px, 2vmin, 16px)', flexShrink: 0,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 900, color: '#293241' }}>
-              {TASK_NAMES[taskNum]}
-            </div>
-            <div style={{ fontSize: 'clamp(12px, 1.6vmin, 14px)', color: pzClosed && phase === 'task2-puzzle-drag' ? '#10B981' : '#64748B', marginTop: 2 }}>
-              {pzClosed && phase === 'task2-puzzle-drag' ? '拼好了！跟原件形狀完全一樣。' : hintText}
-            </div>
-          </div>
-          {canGoPrev && (
-            <button onClick={goToPrevStep} style={navBtnStyle}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="15 18 9 12 15 6" /></svg>
-              上一步
-            </button>
-          )}
-          {canGoNext && (
-            <button onClick={goToNextStep} style={navBtnStyle}>
-              下一步
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
-          )}
-        </div>
+        padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)', gap: 'clamp(6px, 1vmin, 10px)', boxSizing: 'border-box',
+        touchAction: 'manipulation' }}>
 
-        {/* Question card */}
+        {/* Question card — inline, not modal */}
         {phase === 'task2-question' && (
           <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 'clamp(16px, 3vmin, 32px)',
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(16px, 4vmin, 40px) clamp(20px, 5vmin, 48px)',
+            background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
+            animation: 'fadeSlideIn 0.3s ease-out',
           }}>
-            <div style={{
-              background: 'white', borderRadius: 16, padding: '32px 36px',
-              maxWidth: 400, textAlign: 'center', border: '1px solid #E5E7EB',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-              animation: 'fadeSlideIn 0.3s ease-out',
-            }}>
-              <div style={{ fontSize: 16, lineHeight: 1.8, color: '#293241', marginBottom: 24 }}>
-                你用三條邊做出了一模一樣的三角形。
-                <br />但為什麼三條邊一樣，就一定是全等三角形？
-                <br />有沒有可能做出不同的？
-              </div>
-              <button onClick={() => { playSound('click'); setPhase('task2-puzzle'); }} style={{
-                background: '#ee6c4d', color: 'white', border: 'none',
-                borderRadius: 10, padding: '10px 24px', fontSize: 16,
-                fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-              }}>
-                試試看 →
-              </button>
+            <div style={{ fontSize: 'clamp(16px, 2.8vmin, 20px)', lineHeight: 1.8, color: '#293241', textAlign: 'center' }}>
+              你用三條邊做出了一模一樣的三角形。
+              <br />但為什麼三條邊一樣，就一定是全等三角形？
+              <br />有沒有可能做出不同的？
             </div>
           </div>
         )}
@@ -687,13 +621,13 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <>
                       {/* Step 1: Show 3 lines — 5 aligned with original base */}
                       <line x1={340} y1={80} x2={460} y2={80} stroke="#534AB7" strokeWidth={6} strokeLinecap="round" />
-                      <text x={400} y={68} textAnchor="middle" fontSize="15" fontWeight="700" fill="#534AB7">3</text>
+                      <text x={400} y={68} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#534AB7">3</text>
 
                       <line x1={330} y1={130} x2={490} y2={130} stroke="#0F6E56" strokeWidth={6} strokeLinecap="round" />
-                      <text x={410} y={118} textAnchor="middle" fontSize="15" fontWeight="700" fill="#0F6E56">4</text>
+                      <text x={410} y={118} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#0F6E56">4</text>
 
                       <line x1={PZ_BASE_L.x} y1={T1_SRC_A.y} x2={PZ_BASE_R.x} y2={T1_SRC_A.y} stroke="#3d5a80" strokeWidth={6} strokeLinecap="round" />
-                      <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={T1_SRC_A.y - 12} textAnchor="middle" fontSize="15" fontWeight="700" fill="#3d5a80">5</text>
+                      <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={T1_SRC_A.y - 12} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#3d5a80">5</text>
                     </>
                   ) : (
                     <>
@@ -701,7 +635,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                       <line x1={PZ_BASE_L.x} y1={PZ_BASE_L.y} x2={PZ_BASE_R.x} y2={PZ_BASE_R.y} stroke="#3d5a80" strokeWidth={6} strokeLinecap="round" />
                       <circle cx={PZ_BASE_L.x} cy={PZ_BASE_L.y} r={5} fill="#3d5a80" />
                       <circle cx={PZ_BASE_R.x} cy={PZ_BASE_R.y} r={5} fill="#3d5a80" />
-                      <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={PZ_BASE_L.y + 20} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
+                      <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={PZ_BASE_L.y + 20} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
 
                       {/* Pulsing snap hints — purple for 3, green for 4 */}
                   {!pz3Snap && (
@@ -730,7 +664,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <line x1={pz3.p1.x} y1={pz3.p1.y} x2={pz3.p2.x} y2={pz3.p2.y}
                       stroke="#534AB7" strokeWidth={6} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
                     <text x={(pz3.p1.x + pz3.p2.x) / 2} y={(pz3.p1.y + pz3.p2.y) / 2 - 10}
-                      textAnchor="middle" fontSize="14" fontWeight="700" fill="#534AB7" style={{ pointerEvents: 'none' }}>3</text>
+                      textAnchor="middle" className="font-en" fontSize="14" fontWeight="700" fill="#534AB7" style={{ pointerEvents: 'none' }}>3</text>
                   </g>
 
                   {/* Segment 4 (teal) — always visible, drag body */}
@@ -742,15 +676,26 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <line x1={pz4.p1.x} y1={pz4.p1.y} x2={pz4.p2.x} y2={pz4.p2.y}
                       stroke="#0F6E56" strokeWidth={6} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
                     <text x={(pz4.p1.x + pz4.p2.x) / 2} y={(pz4.p1.y + pz4.p2.y) / 2 - 10}
-                      textAnchor="middle" fontSize="14" fontWeight="700" fill="#0F6E56" style={{ pointerEvents: 'none' }}>4</text>
+                      textAnchor="middle" className="font-en" fontSize="14" fontWeight="700" fill="#0F6E56" style={{ pointerEvents: 'none' }}>4</text>
                   </g>
 
-                      {/* Done: filled triangle */}
-                      {pzClosed && free3 && (
-                        <polygon points={`${PZ_BASE_L.x},${PZ_BASE_L.y} ${PZ_BASE_R.x},${PZ_BASE_R.y} ${free3.x},${free3.y}`}
-                          fill="#98c1d9" fillOpacity={0.15} stroke="#3d5a80" strokeWidth={2}
-                          style={{ animation: 'fadeSlideIn 0.3s ease-out' }} />
-                      )}
+                      {/* Done: filled triangle with draw-on stroke */}
+                      {pzClosed && free3 && (() => {
+                        const perim = Math.round(
+                          dist(PZ_BASE_L, PZ_BASE_R) + dist(PZ_BASE_R, free3) + dist(free3, PZ_BASE_L)
+                        );
+                        return (
+                          <>
+                            <polygon points={`${PZ_BASE_L.x},${PZ_BASE_L.y} ${PZ_BASE_R.x},${PZ_BASE_R.y} ${free3.x},${free3.y}`}
+                              fill="#98c1d9" fillOpacity={0} stroke="none"
+                              style={{ animation: 'puzzleFill 0.6s ease-out 0.8s forwards' }} />
+                            <polygon points={`${PZ_BASE_L.x},${PZ_BASE_L.y} ${PZ_BASE_R.x},${PZ_BASE_R.y} ${free3.x},${free3.y}`}
+                              fill="none" stroke="#3d5a80" strokeWidth={2.5}
+                              strokeDasharray={perim} strokeDashoffset={perim}
+                              style={{ animation: 'drawLine 1s ease-out forwards' }} />
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </svg>
@@ -794,9 +739,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
                 {/* Right: triangle (shakes together) */}
                 <polygon points={`${pShk.x},${pShk.y} ${qShk.x},${qShk.y} ${uqR.x},${uqR.y}`} fill="#98c1d9" fillOpacity={0.1} stroke="#3d5a80" strokeWidth={1.5} />
-                <text x={(pShk.x + qShk.x) / 2} y={pShk.y + 18} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
-                <text x={(pShk.x + uqR.x) / 2 - 14} y={(pShk.y + uqR.y) / 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">3</text>
-                <text x={(qShk.x + uqR.x) / 2 + 14} y={(qShk.y + uqR.y) / 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="#3d5a80">4</text>
+                <text x={(pShk.x + qShk.x) / 2} y={pShk.y + 18} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
+                <text x={(pShk.x + uqR.x) / 2 - 14} y={(pShk.y + uqR.y) / 2} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill="#3d5a80">3</text>
+                <text x={(qShk.x + uqR.x) / 2 + 14} y={(qShk.y + uqR.y) / 2} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill="#3d5a80">4</text>
                 {/* All 3 draggable vertices (no labels, just dots) */}
                 {[pShk, qShk, uqR].map((pt, i) => (
                   <circle key={i} cx={pt.x} cy={pt.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
@@ -807,13 +752,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 <div style={{ position: 'absolute', bottom: uqShowBtn ? 60 : 16, left: '50%', transform: 'translateX(-50%)',
                   background: 'rgba(41,50,65,0.9)', color: 'white', borderRadius: 10, padding: '8px 16px', fontSize: 14, fontWeight: 600, textAlign: 'center', maxWidth: '80%' }}>
                   三條邊的長度鎖死了，頂點只能待在固定位置上。
-                </div>
-              )}
-              {uqShowBtn && (
-                <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}>
-                  <button onClick={() => { playSound('click'); setUqR(UQ_R_FIXED); setUqP(UQ_P); setUqQ(UQ_Q); setUqShowHint(false); setUqShowBtn(false); uqDragCount.current = 0; setPhase('task2-unlocked'); }} style={{
-                    background: '#ee6c4d', color: 'white', border: 'none', borderRadius: 10, padding: '8px 20px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                  }}>如果邊長可以變呢？→</button>
                 </div>
               )}
             </div>
@@ -874,9 +812,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 <line x1={uqP.x} y1={uqP.y} x2={uqQ.x} y2={uqQ.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={aOk ? undefined : '4 3'} />
                 <line x1={uqP.x} y1={uqP.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={bOk ? undefined : '4 3'} />
                 <line x1={uqQ.x} y1={uqQ.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={cOk ? undefined : '4 3'} />
-                <text x={bMid.x} y={bMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={aOk ? '#3d5a80' : '#ee6c4d'}>{sA}</text>
-                <text x={lMid.x} y={lMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={bOk ? '#3d5a80' : '#ee6c4d'}>{sB}</text>
-                <text x={rMid.x} y={rMid.y} textAnchor="middle" fontSize="13" fontWeight="700" fill={cOk ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
+                <text x={bMid.x} y={bMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={aOk ? '#3d5a80' : '#ee6c4d'}>{sA}</text>
+                <text x={lMid.x} y={lMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={bOk ? '#3d5a80' : '#ee6c4d'}>{sB}</text>
+                <text x={rMid.x} y={rMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={cOk ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
                 {/* All 3 draggable vertices */}
                 <circle cx={uqP.x} cy={uqP.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
                   style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} onPointerMove={onMoveU} onPointerUp={onUpU} />
@@ -891,13 +829,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   邊長一變，三角形就變了——跟原來的不一樣了。
                 </div>
               )}
-              {uqShowBtn && (
-                <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}>
-                  <button onClick={() => { playSound('click'); setPhase('task2-sss-done'); }} style={{
-                    background: '#3d5a80', color: 'white', border: 'none', borderRadius: 10, padding: '8px 20px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                  }}>我懂了 →</button>
-                </div>
-              )}
             </div>
           );
         })()}
@@ -905,24 +836,60 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         {/* SSS conclusion */}
         {phase === 'task2-sss-done' && (
           <div style={{
-            width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 20,
-            padding: 'clamp(16px, 3vmin, 32px)',
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: 'clamp(16px, 4vmin, 40px) clamp(20px, 5vmin, 48px)',
+            background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
+            animation: 'fadeSlideIn 0.4s ease-out',
           }}>
-            <div style={{
-              background: '#E6F1FB', borderRadius: 14, padding: '24px 32px',
-              maxWidth: 460, textAlign: 'center',
-              animation: 'fadeSlideIn 0.4s ease-out',
-            }}>
-              <div style={{ fontSize: 16, lineHeight: 1.8, color: '#0C447C' }}>
-                三條邊的長度固定 → 頂點只有一個位置
-                <br /><strong>→ 三角形只有一種</strong>
-                <br /><br />邊長一旦改變 → 三角形就不一樣了
-              </div>
+            <div style={{ fontSize: 'clamp(16px, 2.8vmin, 20px)', lineHeight: 1.8, color: '#293241', textAlign: 'center' }}>
+              三條邊的長度固定 → 頂點只有一個位置
+              <br /><strong>→ 三角形只有一種</strong>
+              <br /><br />邊長一旦改變 → 三角形就不一樣了
             </div>
           </div>
         )}
 
+        {/* Bottom floating action bar for module phases */}
+        <div style={{
+          background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
+          height: 'clamp(60px, 9vmin, 72px)', padding: '0 clamp(14px, 2.5vmin, 20px)',
+          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: '0 -2px 12px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Progress bar */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#E5E7EB', borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${((globalIdx + 1) / ALL_STEPS.length) * 100}%`, background: '#ee6c4d', transition: 'width 0.3s ease' }} />
+          </div>
+          {/* Prev button — always rendered to reserve space, hidden when not available */}
+          <button onClick={canGoPrev ? goToPrevStep : undefined} style={{
+            width: 32, height: 32, borderRadius: 8, border: 'none', background: 'transparent',
+            cursor: canGoPrev ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, padding: 0, visibility: canGoPrev ? 'visible' : 'hidden',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          {/* Pill label */}
+          <span style={{
+            padding: '2px 10px', borderRadius: 6, fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 700,
+            background: moduleActionLabel.bg, color: moduleActionLabel.color, flexShrink: 0, whiteSpace: 'nowrap',
+          }}>{moduleActionLabel.text}</span>
+          {/* Hint text */}
+          <span style={{ flex: 1, fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 600, color: moduleHintColor }}>
+            {moduleHint}
+          </span>
+          {/* Next / Complete button — always rendered to reserve space */}
+          <button onClick={isLastStep ? onComplete : canGoNext ? goToNextStep : undefined} style={{
+            height: 'clamp(40px, 6vmin, 48px)', padding: '0 clamp(14px, 2.5vmin, 20px)', borderRadius: 10,
+            border: 'none', background: isLastStep ? '#10B981' : '#3d5a80', color: 'white',
+            cursor: (canGoNext || isLastStep) ? 'pointer' : 'default', fontWeight: 700, fontSize: 'clamp(15px, 2.5vmin, 18px)',
+            fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+            visibility: (canGoNext || isLastStep) ? 'visible' : 'hidden',
+          }}>
+            {isLastStep ? '完成' : '下一步'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
       </div>
     );
   }
@@ -933,89 +900,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)',
       gap: 'clamp(6px, 1vmin, 10px)',
       fontFamily: 'var(--font-main)', position: 'relative',
+      touchAction: 'manipulation',
     }}>
-      {/* Instruction bar */}
-      <div style={{
-        background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
-        padding: 'clamp(14px, 3vmin, 22px) clamp(16px, 3vmin, 24px)',
-        flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4,
-      }}>
-        {!isDialog && (
-          <div style={{ fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 900, color: '#293241' }}>
-            {TASK_NAMES[taskNum]}
-          </div>
-        )}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          fontSize: 'clamp(13px, 2vmin, 16px)', fontWeight: 600, color: '#3d5a80',
-        }}>
-          {phase === 'task1-done' ? (
-            <>
-              <span style={{ color: '#10B981', flex: 1 }}>底邊複製完成！</span>
-              {canGoPrev && (
-                <button onClick={goToPrevStep} style={{
-                  height: 'clamp(28px, 4.5vmin, 34px)', padding: '0 12px', borderRadius: 8,
-                  border: '1.5px solid #D1D5DB', background: 'white', color: '#4B5563',
-                  cursor: 'pointer', fontWeight: 700, fontSize: 'clamp(12px, 1.8vmin, 14px)',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="15 18 9 12 15 6" /></svg>
-                  上一步
-                </button>
-              )}
-              {canGoNext && (
-                <button onClick={goToNextStep} style={{
-                  height: 'clamp(28px, 4.5vmin, 34px)', padding: '0 12px', borderRadius: 8,
-                  border: '1.5px solid #D1D5DB', background: 'white', color: '#4B5563',
-                  cursor: 'pointer', fontWeight: 700, fontSize: 'clamp(12px, 1.8vmin, 14px)',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                }}>
-                  下一步
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
-                </button>
-              )}
-            </>
-          ) : !isDialog ? (
-            <>
-              <span style={{ flex: 1 }}>{hintText}</span>
-              {canGoPrev && (
-                <button onClick={goToPrevStep} style={{
-                  height: 'clamp(28px, 4.5vmin, 34px)', padding: '0 12px', borderRadius: 8,
-                  border: '1.5px solid #D1D5DB', background: 'white', color: '#4B5563',
-                  cursor: 'pointer', fontWeight: 700, fontSize: 'clamp(12px, 1.8vmin, 14px)',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="15 18 9 12 15 6" /></svg>
-                  上一步
-                </button>
-              )}
-              {canGoNext && (
-                <button onClick={goToNextStep} style={{
-                  height: 'clamp(28px, 4.5vmin, 34px)', padding: '0 12px', borderRadius: 8,
-                  border: '1.5px solid #D1D5DB', background: 'white', color: '#4B5563',
-                  cursor: 'pointer', fontWeight: 700, fontSize: 'clamp(12px, 1.8vmin, 14px)',
-                  fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                }}>
-                  下一步
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
-                </button>
-              )}
-            </>
-          ) : (
-            <span style={{ color: '#94A3B8' }}>對話中...</span>
-          )}
-        </div>
-      </div>
-
-      {/* SVG */}
+      {/* SVG — now first (top), instruction bar moved to bottom */}
       <div style={{
         flex: 1, minHeight: 0, background: 'white', borderRadius: 16,
         border: '1px solid #E5E7EB', overflow: 'hidden',
       }}>
         <svg
           viewBox="0 0 550 320"
-          style={{ width: '100%', height: '100%', cursor: target && !isAutoPhase ? 'pointer' : 'default' }}
-          onClick={!isAutoPhase ? handleSvgClick : undefined}
+          style={{ width: '100%', height: '100%', cursor: target ? 'pointer' : 'default', touchAction: 'none' }}
+          onClick={phaseAction === 'action' ? handleSvgClick : undefined}
         >
 
           {/* ═══ Task 1 ═══ */}
@@ -1033,11 +928,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 <RulerTool from={T1_TGT_A} to={T1_TGT_B} />
               )}
 
-              {/* Target area */}
-              <line x1={T1_TGT_A.x} y1={T1_TGT_A.y} x2={T1_TGT_B.x} y2={T1_TGT_B.y}
-                stroke={t1Done ? '#10B981' : '#CBD5E1'} strokeWidth={t1Done ? 3 : 1.5}
-                strokeDasharray={t1Done ? undefined : '5 4'}
-                style={t1Done ? { animation: 'fadeSlideIn 0.3s ease-out' } : undefined} />
+              {/* Target area — dashed guide, then draw-on animation left→right when done */}
+              {!t1Done && (
+                <line x1={T1_TGT_A.x} y1={T1_TGT_A.y} x2={T1_TGT_B.x} y2={T1_TGT_B.y}
+                  stroke="#CBD5E1" strokeWidth={1.5} strokeDasharray="5 4" />
+              )}
+              {t1Done && (
+                <line x1={T1_TGT_A.x} y1={T1_TGT_A.y} x2={T1_TGT_B.x} y2={T1_TGT_B.y}
+                  stroke="#10B981" strokeWidth={3}
+                  strokeDasharray={T1_LEN} strokeDashoffset={T1_LEN}
+                  style={{ animation: 'drawLine 0.8s ease-out forwards' }} />
+              )}
               <circle cx={T1_TGT_A.x} cy={T1_TGT_A.y} r="4" fill={t1Done ? '#10B981' : '#94A3B8'} />
               {t1Done && <circle cx={T1_TGT_B.x} cy={T1_TGT_B.y} r="4" fill="#10B981" />}
               <text x={(T1_TGT_A.x + T1_TGT_B.x) / 2} y={T1_TGT_A.y + 60}
@@ -1048,7 +949,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           )}
 
           {/* Task 1 left-side result persists during Task 2 & 3 */}
-          {(phase.startsWith('task2') || phase.startsWith('task3')) && !isDialog && (
+          {phase.startsWith('task2') && (
             <>
               <OriginalTriangle showDots />
               {/* Copied base line */}
@@ -1060,7 +961,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           )}
 
           {/* ═══ Task 2: SSS ═══ */}
-          {phase.startsWith('task2') && !isDialog && (
+          {phase.startsWith('task2') && (
             <>
               {/* Bottom ruler: hidden during line draw/done phases */}
               {phase !== 'task2-draw-l' && phase !== 'task2-done-l' && phase !== 'task2-draw-r' && phase !== 'task2-done-r' && phase !== 'task2-congruent' && (
@@ -1069,26 +970,41 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   : <RulerTool from={SSS_LEFT} to={SSS_RIGHT} />
               )}
 
-              {sssLines.map((l, i) => <line key={`sl${i}`} x1={l.from.x} y1={l.from.y} x2={l.to.x} y2={l.to.y} stroke="#94A3B8" strokeWidth="2.5" />)}
+              {sssLines.map((l, i) => {
+                const isNewLeft = phase === 'task2-done-l' && l.from === SSS_LEFT && l.to === SSS_TOP;
+                const isNewRight = phase === 'task2-done-r' && l.from === SSS_RIGHT && l.to === SSS_TOP;
+                const lineLen = Math.round(dist(l.from, l.to));
+                if (isNewLeft || isNewRight) {
+                  return (
+                    <line key={`sl${i}`} x1={l.from.x} y1={l.from.y} x2={l.to.x} y2={l.to.y}
+                      stroke="#ee6c4d" strokeWidth="3"
+                      strokeDasharray={lineLen} strokeDashoffset={lineLen}
+                      style={{ animation: `drawLine 0.8s ease-out forwards` }} />
+                  );
+                }
+                return <line key={`sl${i}`} x1={l.from.x} y1={l.from.y} x2={l.to.x} y2={l.to.y} stroke="#94A3B8" strokeWidth="2.5" />;
+              })}
 
               {/* Side labels on drawn lines */}
               <text x={(SSS_LEFT.x + SSS_RIGHT.x) / 2} y={SSS_LEFT.y - 10}
-                textAnchor="middle" fontSize="11" fontWeight="700" fill="#94A3B8">5</text>
+                textAnchor="middle" className="font-en" fontSize="11" fontWeight="700" fill="#94A3B8">5</text>
               {sssLines.some(l => l.from === SSS_LEFT && l.to === SSS_TOP) && (
                 <text x={(SSS_LEFT.x + SSS_TOP.x) / 2 - 10} y={(SSS_LEFT.y + SSS_TOP.y) / 2}
-                  textAnchor="end" fontSize="11" fontWeight="700" fill="#94A3B8">3</text>
+                  textAnchor="end" className="font-en" fontSize="11" fontWeight="700" fill="#94A3B8">3</text>
               )}
               {sssLines.some(l => l.from === SSS_RIGHT && l.to === SSS_TOP) && (
                 <text x={(SSS_RIGHT.x + SSS_TOP.x) / 2 + 10} y={(SSS_RIGHT.y + SSS_TOP.y) / 2}
-                  textAnchor="start" fontSize="11" fontWeight="700" fill="#94A3B8">4</text>
+                  textAnchor="start" className="font-en" fontSize="11" fontWeight="700" fill="#94A3B8">4</text>
               )}
               {phase !== 'task2-congruent' && sssArcs.map((arc, i) => {
+                // Hide the arc that's currently being animated (avoid double render)
+                if (i === 0 && phase === 'task2-arc1') return null;
+                if (i === 1 && phase === 'task2-arc2') return null;
                 const cx = arc.center.x;
                 const cy = arc.center.y;
                 const r = arc.radius;
-                const arcAngle = 110 * Math.PI / 180;
+                const arcAngle = (i === 0 ? 90 : 70) * Math.PI / 180;
                 if (i === 0) {
-                  // Left arc: start from right (cx+r), sweep counterclockwise upward
                   const endX = cx + r * Math.cos(-arcAngle);
                   const endY = cy + r * Math.sin(-arcAngle);
                   return (
@@ -1097,7 +1013,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                       fill="none" stroke="#7EC8E3" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.6" />
                   );
                 } else {
-                  // Right arc: start from left (cx-r), sweep clockwise upward
                   const endX = cx + r * Math.cos(Math.PI - arcAngle);
                   const endY = cy - r * Math.sin(Math.PI - arcAngle);
                   return (
@@ -1107,7 +1022,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   );
                 }
               })}
-              {phase !== 'task2-congruent' && sssVertex && <circle cx={sssVertex.x} cy={sssVertex.y} r="6" fill="#ee6c4d" stroke="white" strokeWidth="2" />}
+              {phase !== 'task2-congruent' && sssVertex && <circle cx={sssVertex.x} cy={sssVertex.y} r="5" fill="#ee6c4d" />}
 
               {/* Tools */}
               {phase === 'task2-pin' && <AnimatedCompass needle={SSS_LEFT} pencilTarget={{ x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y }} spread={0} closed />}
@@ -1117,8 +1032,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 const cx = SSS_LEFT.x;
                 const cy = SSS_LEFT.y;
                 const r = SSS_B;
-                // Sweep from 0 (right) counterclockwise to 110°
-                const maxAngle = 110 * Math.PI / 180;
+                const maxAngle = 90 * Math.PI / 180;
                 const angle = arcSweep * maxAngle;
                 const px = cx + r * Math.cos(-angle);
                 const py = cy + r * Math.sin(-angle);
@@ -1141,7 +1055,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 const cx = SSS_RIGHT.x;
                 const cy = SSS_RIGHT.y;
                 const r = SSS_C;
-                const maxAngle = 110 * Math.PI / 180;
+                const maxAngle = 70 * Math.PI / 180;
                 const angle = arcSweep * maxAngle;
                 // Start from left of center (π direction), sweep clockwise upward
                 const startX = cx - r;
@@ -1181,11 +1095,11 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <circle cx={SSS_TOP.x} cy={SSS_TOP.y} r="4" fill={rightColor} style={{ transition: 'fill 0.5s' }} />
                     {/* Side labels */}
                     <text x={(SSS_LEFT.x + SSS_TOP.x) / 2 - 10} y={(SSS_LEFT.y + SSS_TOP.y) / 2}
-                      textAnchor="end" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>3</text>
+                      textAnchor="end" className="font-en" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>3</text>
                     <text x={(SSS_RIGHT.x + SSS_TOP.x) / 2 + 10} y={(SSS_RIGHT.y + SSS_TOP.y) / 2}
-                      textAnchor="start" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>4</text>
+                      textAnchor="start" className="font-en" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>4</text>
                     <text x={(SSS_LEFT.x + SSS_RIGHT.x) / 2} y={SSS_LEFT.y - 10}
-                      textAnchor="middle" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>5</text>
+                      textAnchor="middle" className="font-en" fontSize="11" fontWeight="700" fill={rightColor} style={{ transition: 'fill 0.5s' }}>5</text>
 
                     {/* Tracing animation (only before done) */}
                     {!congruentDone && (
@@ -1229,49 +1143,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             </>
           )}
 
-          {/* ═══ Task 3: SAS ═══ */}
-          {phase.startsWith('task3') && !isDialog && (
-            <>
-              <text x={SAS_LEFT.x - 14} y={SAS_LEFT.y + 5}
-                textAnchor="end" fontSize="13" fontWeight="900" fill="#3d5a80">原件</text>
-              <polygon points={`${SAS_LEFT.x},${SAS_LEFT.y} ${SAS_RIGHT.x},${SAS_RIGHT.y} ${SAS_TOP.x},${SAS_TOP.y}`}
-                fill="#98c1d9" fillOpacity="0.05" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 3" />
-              <text x={(SAS_LEFT.x + SAS_RIGHT.x) / 2} y={SAS_LEFT.y + 20} textAnchor="middle" fontSize="12" fontWeight="700" fill="#94A3B8">a = {SAS_VALS.a}</text>
 
-              {sasLines.map((l, i) => <line key={`sl${i}`} x1={l.from.x} y1={l.from.y} x2={l.to.x} y2={l.to.y} stroke="#3d5a80" strokeWidth="2.5" />)}
-
-              {phase === 'task3-step0' && <RulerTool from={SAS_LEFT} to={SAS_RIGHT} />}
-              {phase === 'task3-step1' && <ProtractorTool center={SAS_LEFT} angle={SAS_VALS.angle} />}
-
-              {sasRayShown && (
-                <>
-                  <line x1={SAS_LEFT.x} y1={SAS_LEFT.y} x2={SAS_TOP.x + 30} y2={SAS_TOP.y - 15}
-                    stroke="#ee6c4d" strokeWidth="1.5" strokeDasharray="5 4" opacity="0.5" />
-                  {(() => {
-                    const r = 25;
-                    const end = { x: SAS_LEFT.x + r, y: SAS_LEFT.y };
-                    const start = { x: SAS_LEFT.x + r * Math.cos(-sasRad), y: SAS_LEFT.y + r * Math.sin(-sasRad) };
-                    return <path d={`M ${end.x},${end.y} A ${r},${r} 0 0,0 ${start.x},${start.y}`}
-                      fill="none" stroke="#ee6c4d" strokeWidth="1.5" opacity="0.6" />;
-                  })()}
-                  <text x={SAS_LEFT.x + 32} y={SAS_LEFT.y - 12} fontSize="11" fontWeight="900" fill="#ee6c4d">{SAS_VALS.angle}°</text>
-                </>
-              )}
-
-              {phase === 'task3-step2' && <AnimatedCompass needle={SAS_LEFT} pencilTarget={SAS_TOP} spread={1} />}
-              {phase === 'task3-step3' && sasVertex && <RulerTool from={SAS_RIGHT} to={sasVertex} />}
-
-              {sasVertex && <circle cx={sasVertex.x} cy={sasVertex.y} r="6" fill="#ee6c4d" stroke="white" strokeWidth="2" />}
-
-              {/* Side b label */}
-              {sasVertex && (
-                <text x={(SAS_LEFT.x + SAS_TOP.x) / 2 - 12} y={(SAS_LEFT.y + SAS_TOP.y) / 2} fontSize="11" fontWeight="700" fill="#534AB7">b = {SAS_VALS.b}</text>
-              )}
-            </>
-          )}
-
-          {/* Pulsing target */}
-          {target && !isAutoPhase && (
+          {/* Pulsing target for action phases */}
+          {target && (
             <>
               <circle cx={target.x} cy={target.y} r="20"
                 fill="none" stroke="#ee6c4d" strokeWidth="2" opacity="0.4"
@@ -1282,6 +1156,47 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         </svg>
       </div>
 
+      {/* Bottom floating action bar */}
+      <div style={{
+        background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
+        padding: 'clamp(10px, 2vmin, 14px) clamp(14px, 2.5vmin, 20px)',
+        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
+        boxShadow: '0 -2px 12px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Progress bar */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#E5E7EB', borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${((globalIdx + 1) / ALL_STEPS.length) * 100}%`, background: '#ee6c4d', transition: 'width 0.3s ease' }} />
+        </div>
+        {/* Prev button */}
+        {canGoPrev && (
+          <button onClick={goToPrevStep} style={{
+            width: 32, height: 32, borderRadius: 8, border: 'none', background: 'transparent',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+        )}
+        {/* Pill label */}
+        <span style={{
+          padding: '2px 10px', borderRadius: 6, fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 700,
+          background: actionLabel.bg, color: actionLabel.color, flexShrink: 0, whiteSpace: 'nowrap',
+        }}>{actionLabel.text}</span>
+        {/* Task name + hint */}
+        <span style={{ flex: 1, fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 600, color: '#3d5a80', lineHeight: 1.4 }}>
+          {hintText}
+        </span>
+        {/* Next button — always rendered to reserve space */}
+        <button onClick={canGoNext ? goToNextStep : undefined} style={{
+          height: 'clamp(40px, 6vmin, 48px)', padding: '0 clamp(14px, 2.5vmin, 20px)', borderRadius: 10,
+          border: 'none', background: '#3d5a80', color: 'white',
+          cursor: canGoNext ? 'pointer' : 'default', fontWeight: 700, fontSize: 'clamp(15px, 2.5vmin, 18px)',
+          fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+          visibility: canGoNext ? 'visible' : 'hidden',
+        }}>
+          下一步
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="9 18 15 12 9 6" /></svg>
+        </button>
+      </div>
     </div>
   );
 }
