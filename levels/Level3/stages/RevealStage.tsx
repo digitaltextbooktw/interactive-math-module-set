@@ -67,10 +67,34 @@ function TriPanel({ type }: { type: Tab }) {
     dragStart.current = { x: e.clientX, y: e.clientY };
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    dragStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragStart.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
+
+    if (type === 'aaa') {
+      const newScale = Math.max(0.4, Math.min(2.0, 1 + dy / -150));
+      setScale(newScale);
+    } else {
+      setDragOffset({ x: dx * 0.3, y: dy * 0.3 });
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) setShowSnap(true);
+    }
+  }, [type]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!dragStart.current) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    const dx = touch.clientX - dragStart.current.x;
+    const dy = touch.clientY - dragStart.current.y;
 
     if (type === 'aaa') {
       const newScale = Math.max(0.4, Math.min(2.0, 1 + dy / -150));
@@ -114,6 +138,11 @@ function TriPanel({ type }: { type: Tab }) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handlePointerUp}
+        onTouchCancel={handlePointerUp}
       >
         <polygon
           points={`${pts.A.x},${pts.A.y} ${pts.B.x},${pts.B.y} ${pts.C.x},${pts.C.y}`}

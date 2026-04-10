@@ -3,6 +3,13 @@ import { playSound } from '../../../utils/sound';
 
 interface Point { x: number; y: number; }
 
+type TouchLikeEvent = {
+  touches: ArrayLike<{ clientX: number; clientY: number }>;
+  changedTouches: ArrayLike<{ clientX: number; clientY: number }>;
+  preventDefault: () => void;
+  stopPropagation?: () => void;
+};
+
 function dist(a: Point, b: Point) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
@@ -304,6 +311,23 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const uqFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uqSvgRef = useRef<SVGSVGElement>(null);
 
+  const getTouchPoint = useCallback((e: TouchLikeEvent): Point | null => {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return null;
+    return { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const clientToSvgPoint = useCallback((svg: SVGSVGElement | null, clientX: number, clientY: number): Point | null => {
+    if (!svg) return null;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
+
 
   // Reset animDone and arcTriggered when phase changes
   useEffect(() => {
@@ -562,31 +586,35 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           const seg3Len = 3 * UNIT; // 120px
           const seg4Len = 4 * UNIT; // 160px
           const toSvg = (e: React.PointerEvent): Point | null => {
-            const svg = pzSvgRef.current;
-            if (!svg) return null;
-            const ctm = svg.getScreenCTM();
-            if (!ctm) return null;
-            const pt = svg.createSVGPoint();
-            pt.x = e.clientX; pt.y = e.clientY;
-            const svgPt = pt.matrixTransform(ctm.inverse());
-            return { x: svgPt.x, y: svgPt.y };
+            return clientToSvgPoint(pzSvgRef.current, e.clientX, e.clientY);
+          };
+          const toSvgTouch = (e: TouchLikeEvent): Point | null => {
+            const touch = getTouchPoint(e);
+            return touch ? clientToSvgPoint(pzSvgRef.current, touch.x, touch.y) : null;
           };
           const clp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-          const onDown = (e: React.PointerEvent, seg: '3' | '4') => {
+          const startDrag = (seg: '3' | '4', pt: Point) => {
             if (pzClosed) return;
-            e.preventDefault(); e.stopPropagation();
-            // Capture on SVG so onPointerMove/onPointerUp on SVG still fire
-            pzSvgRef.current?.setPointerCapture(e.pointerId);
-            const pt = toSvg(e);
-            if (!pt) return;
             const cur = seg === '3' ? pz3 : pz4;
             pzDragRef.current = { seg, startMouse: pt, startP1: { ...cur.p1 }, startP2: { ...cur.p2 } };
           };
-          const onMove = (e: React.PointerEvent) => {
-            const d = pzDragRef.current;
-            if (!d) return;
+          const onDown = (e: React.PointerEvent, seg: '3' | '4') => {
+            e.preventDefault(); e.stopPropagation();
+            pzSvgRef.current?.setPointerCapture(e.pointerId);
             const pt = toSvg(e);
             if (!pt) return;
+            startDrag(seg, pt);
+          };
+          const onTouchStart = (e: React.TouchEvent, seg: '3' | '4') => {
+            e.preventDefault();
+            e.stopPropagation();
+            const pt = toSvgTouch(e);
+            if (!pt) return;
+            startDrag(seg, pt);
+          };
+          const moveDrag = (pt: Point) => {
+            const d = pzDragRef.current;
+            if (!d) return;
             const segLen = d.seg === '3' ? seg3Len : seg4Len;
             const snap = d.seg === '3' ? pz3Snap : pz4Snap;
             const setCur = d.seg === '3' ? setPz3 : setPz4;
@@ -630,6 +658,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
               }
             }
           };
+          const onMove = (e: React.PointerEvent) => {
+            const pt = toSvg(e);
+            if (!pt) return;
+            moveDrag(pt);
+          };
+          const onTouchMove = (e: React.TouchEvent) => {
+            e.preventDefault();
+            const pt = toSvgTouch(e);
+            if (!pt) return;
+            moveDrag(pt);
+          };
           const onUp = () => { pzDragRef.current = null; };
           const free3 = pz3Snap ? (pz3Snap === 'p1' ? pz3.p2 : pz3.p1) : null;
           const free4 = pz4Snap ? (pz4Snap === 'p1' ? pz4.p2 : pz4.p1) : null;
@@ -641,7 +680,13 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           return (
               <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
                 <svg ref={pzSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
-                  onPointerMove={phase === 'task2-puzzle-drag' ? onMove : undefined} onPointerUp={phase === 'task2-puzzle-drag' ? onUp : undefined} onPointerLeave={phase === 'task2-puzzle-drag' ? onUp : undefined}>
+                  onPointerMove={phase === 'task2-puzzle-drag' ? onMove : undefined}
+                  onPointerUp={phase === 'task2-puzzle-drag' ? onUp : undefined}
+                  onPointerLeave={phase === 'task2-puzzle-drag' ? onUp : undefined}
+                  onPointerCancel={phase === 'task2-puzzle-drag' ? onUp : undefined}
+                  onTouchMove={phase === 'task2-puzzle-drag' ? onTouchMove : undefined}
+                  onTouchEnd={phase === 'task2-puzzle-drag' ? onUp : undefined}
+                  onTouchCancel={phase === 'task2-puzzle-drag' ? onUp : undefined}>
 
                   {/* Left: original triangle */}
                   <OriginalTriangle />
@@ -689,7 +734,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <line x1={pz3.p1.x} y1={pz3.p1.y} x2={pz3.p2.x} y2={pz3.p2.y}
                       stroke="transparent" strokeWidth={28} strokeLinecap="round"
                       style={{ cursor: pzClosed ? 'default' : 'grab' }}
-                      onPointerDown={e => onDown(e, '3')} />
+                      onPointerDown={e => onDown(e, '3')}
+                      onTouchStart={e => onTouchStart(e, '3')} />
                     <line x1={pz3.p1.x} y1={pz3.p1.y} x2={pz3.p2.x} y2={pz3.p2.y}
                       stroke="#534AB7" strokeWidth={6} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
                     <text x={(pz3.p1.x + pz3.p2.x) / 2} y={(pz3.p1.y + pz3.p2.y) / 2 - 10}
@@ -701,7 +747,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     <line x1={pz4.p1.x} y1={pz4.p1.y} x2={pz4.p2.x} y2={pz4.p2.y}
                       stroke="transparent" strokeWidth={28} strokeLinecap="round"
                       style={{ cursor: pzClosed ? 'default' : 'grab' }}
-                      onPointerDown={e => onDown(e, '4')} />
+                      onPointerDown={e => onDown(e, '4')}
+                      onTouchStart={e => onTouchStart(e, '4')} />
                     <line x1={pz4.p1.x} y1={pz4.p1.y} x2={pz4.p2.x} y2={pz4.p2.y}
                       stroke="#0F6E56" strokeWidth={6} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
                     <text x={(pz4.p1.x + pz4.p2.x) / 2} y={(pz4.p1.y + pz4.p2.y) / 2 - 10}
@@ -735,17 +782,31 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
         {/* ═══ Locked drag: all 3 vertices draggable but locked ═══ */}
         {phase === 'task2-locked' && (() => {
-          const onDownL = (e: React.PointerEvent) => {
-            e.preventDefault(); (e.target as Element).setPointerCapture(e.pointerId);
+          const startLockedDrag = () => {
             uqDragRef.current = 'r'; playSound('click');
           };
-          const onMoveL = (e: React.PointerEvent) => {
+          const onDownL = (e: React.PointerEvent) => {
+            e.preventDefault(); (e.target as Element).setPointerCapture(e.pointerId);
+            startLockedDrag();
+          };
+          const onTouchStartL = (e: React.TouchEvent) => {
+            e.preventDefault();
+            startLockedDrag();
+          };
+          const moveLockedDrag = () => {
             if (!uqDragRef.current) return;
             const ox = (Math.random() - 0.5) * 4, oy = (Math.random() - 0.5) * 4;
             setUqR({ x: UQ_R_FIXED.x + ox, y: UQ_R_FIXED.y + oy });
             setUqArcFlash(true);
             if (uqFlashTimer.current) clearTimeout(uqFlashTimer.current);
             uqFlashTimer.current = setTimeout(() => { setUqArcFlash(false); uqFlashTimer.current = null; }, 150);
+          };
+          const onMoveL = () => {
+            moveLockedDrag();
+          };
+          const onTouchMoveL = (e: React.TouchEvent) => {
+            e.preventDefault();
+            moveLockedDrag();
           };
           const onUpL = () => {
             if (!uqDragRef.current) return;
@@ -760,7 +821,12 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           const qShk = { x: UQ_Q.x + shk.x, y: UQ_Q.y + shk.y };
           return (
             <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
-              <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}>
+              <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
+                onPointerUp={onUpL}
+                onPointerCancel={onUpL}
+                onTouchMove={onTouchMoveL}
+                onTouchEnd={onUpL}
+                onTouchCancel={onUpL}>
                 {/* Left: original triangle (原件) */}
                 <OriginalTriangle />
 
@@ -772,7 +838,15 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 {/* All 3 draggable vertices (no labels, just dots) */}
                 {[pShk, qShk, uqR].map((pt, i) => (
                   <circle key={i} cx={pt.x} cy={pt.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                    style={{ cursor: 'grab' }} onPointerDown={onDownL} onPointerMove={onMoveL} onPointerUp={onUpL} />
+                    style={{ cursor: 'grab' }}
+                    onPointerDown={onDownL}
+                    onPointerMove={onMoveL}
+                    onPointerUp={onUpL}
+                    onPointerCancel={onUpL}
+                    onTouchStart={onTouchStartL}
+                    onTouchMove={onTouchMoveL}
+                    onTouchEnd={onUpL}
+                    onTouchCancel={onUpL} />
                 ))}
               </svg>
               {uqShowHint && (
@@ -788,27 +862,37 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         {/* ═══ Unlocked drag: vertices move freely ═══ */}
         {phase === 'task2-unlocked' && (() => {
           const toSvg = (e: React.PointerEvent): Point | null => {
-            const svg = uqSvgRef.current;
-            if (!svg) return null;
-            const ctm = svg.getScreenCTM();
-            if (!ctm) return null;
-            const pt = svg.createSVGPoint();
-            pt.x = e.clientX; pt.y = e.clientY;
-            const svgPt = pt.matrixTransform(ctm.inverse());
-            return { x: svgPt.x, y: svgPt.y };
+            return clientToSvgPoint(uqSvgRef.current, e.clientX, e.clientY);
+          };
+          const toSvgTouch = (e: TouchLikeEvent): Point | null => {
+            const touch = getTouchPoint(e);
+            return touch ? clientToSvgPoint(uqSvgRef.current, touch.x, touch.y) : null;
           };
           const onDownU = (e: React.PointerEvent, which: 'p' | 'q' | 'r') => {
             e.preventDefault(); (e.target as Element).setPointerCapture(e.pointerId);
             uqDragRef.current = which; playSound('click');
           };
-          const onMoveU = (e: React.PointerEvent) => {
+          const onTouchStartU = (e: React.TouchEvent, which: 'p' | 'q' | 'r') => {
+            e.preventDefault();
+            uqDragRef.current = which; playSound('click');
+          };
+          const moveUnlockedDrag = (pt: Point) => {
             if (!uqDragRef.current) return;
-            const pt = toSvg(e);
-            if (!pt) return;
             const clamped = { x: Math.max(280, Math.min(540, pt.x)), y: Math.max(30, Math.min(290, pt.y)) };
             if (uqDragRef.current === 'p') setUqP(clamped);
             else if (uqDragRef.current === 'q') setUqQ(clamped);
             else setUqR(clamped);
+          };
+          const onMoveU = (e: React.PointerEvent) => {
+            const pt = toSvg(e);
+            if (!pt) return;
+            moveUnlockedDrag(pt);
+          };
+          const onTouchMoveU = (e: React.TouchEvent) => {
+            e.preventDefault();
+            const pt = toSvgTouch(e);
+            if (!pt) return;
+            moveUnlockedDrag(pt);
           };
           const onUpU = () => {
             if (!uqDragRef.current) return;
@@ -824,7 +908,12 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           return (
             <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
               <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
-                onPointerMove={onMoveU} onPointerUp={onUpU}>
+                onPointerMove={onMoveU}
+                onPointerUp={onUpU}
+                onPointerCancel={onUpU}
+                onTouchMove={onTouchMoveU}
+                onTouchEnd={onUpU}
+                onTouchCancel={onUpU}>
                 {/* Left: original triangle (原件) */}
                 <OriginalTriangle />
 
@@ -840,11 +929,11 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 <text x={(uqQ.x + uqR.x) / 2 + 14} y={(uqQ.y + uqR.y) / 2} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={uqAllMatch ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
                 {/* All 3 draggable vertices */}
                 <circle cx={uqP.x} cy={uqP.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} onTouchStart={e => onTouchStartU(e, 'p')} />
                 <circle cx={uqQ.x} cy={uqQ.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'q')} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'q')} onTouchStart={e => onTouchStartU(e, 'q')} />
                 <circle cx={uqR.x} cy={uqR.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'r')} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'r')} onTouchStart={e => onTouchStartU(e, 'r')} />
               </svg>
               {(uqShowHint || uqAllMatch) && (
                 <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
