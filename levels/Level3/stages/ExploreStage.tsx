@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { playSound } from '../../../utils/sound';
 
 interface Point { x: number; y: number; }
@@ -158,6 +158,7 @@ type Phase =
   | 'task2-pin'                                                      // compass pinned, closed
   | 'task2-step0'                                                    // compass opens to 3
   | 'task2-arc1'                                                     // animate arc from left (r=3), stays after done
+  | 'task2-ruler2'                                                   // ruler measures right edge = 4
   | 'task2-pin2'                                                     // compass pinned at right, closed
   | 'task2-open2'                                                    // compass opens to 4
   | 'task2-arc2'                                                     // animate arc from right (r=4)
@@ -192,10 +193,11 @@ const PHASE_ACTION: Record<Phase, ActionType> = {
   'task2-ruler': 'info',
   'task2-pin': 'action',
   'task2-step0': 'auto',
-  'task2-arc1': 'auto',
+  'task2-arc1': 'action',
+  'task2-ruler2': 'info',
   'task2-pin2': 'action',
   'task2-open2': 'auto',
-  'task2-arc2': 'auto',
+  'task2-arc2': 'action',
   'task2-step2': 'action',
   'task2-draw-l': 'action',
   'task2-done-l': 'info',
@@ -220,19 +222,20 @@ const ACTION_LABELS: Record<ActionType, { text: string; bg: string; color: strin
 const STEP_HINTS: Record<string, string> = {
   'task1-show':        '這是 3-4-5 直角三角形（原件）。來複製底邊吧！',
   'task1-ruler-src':   '直尺量出底邊 = 5',
-  'task1-ruler-tgt':   '→ 點擊右側的起點，畫出底邊',
+  'task1-ruler-tgt':   '點擊右側的起點，畫出底邊',
   'task1-done':        '底邊複製完成！',
   'task2-ruler':       `直尺量出左邊 = ${SSS_VALS.b}`,
-  'task2-pin':         '→ 點擊左端點，釘上圓規',
+  'task2-pin':         '點擊左端點，釘上圓規',
   'task2-step0':       '圓規張開中⋯⋯',
-  'task2-arc1':        '畫弧中⋯⋯',
-  'task2-pin2':        '→ 點擊右端點，釘上圓規',
+  'task2-arc1':        '點擊圓規，畫弧',
+  'task2-ruler2':      `直尺量出右邊 = ${SSS_VALS.c}`,
+  'task2-pin2':        '點擊右端點，釘上圓規',
   'task2-open2':       '圓規張開中⋯⋯',
-  'task2-arc2':        '畫弧中⋯⋯',
-  'task2-step2':       '→ 點擊兩弧的交叉點（第三頂點）',
-  'task2-draw-l':      '→ 點擊頂點，用直尺連左邊',
+  'task2-arc2':        '點擊圓規，畫弧',
+  'task2-step2':       '點擊兩弧的交叉點（第三頂點）',
+  'task2-draw-l':      '點擊頂點，用直尺連左邊',
   'task2-done-l':      '左邊連好了！',
-  'task2-draw-r':      '→ 點擊頂點，用直尺連右邊',
+  'task2-draw-r':      '點擊頂點，用直尺連右邊',
   'task2-done-r':      'SSS 三角形完成！',
   'task2-congruent':   '三邊相等 → 形狀完全一樣 = SSS 全等！',
   'task2-question':    '為什麼三條邊一樣就一定全等？',
@@ -247,6 +250,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const [phase, setPhase] = useState<Phase>('task1-show');
   const [compassSpread, setCompassSpread] = useState(0);
   const [arcSweep, setArcSweep] = useState(0); // 0→1 for arc drawing animation
+  const [arcTriggered, setArcTriggered] = useState(false); // user clicked compass to start arc
   const [congruentDone, setCongruentDone] = useState(false); // after trace animation completes
   const [animDone, setAnimDone] = useState(false); // tracks whether auto-phase animation finished
 
@@ -293,9 +297,10 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const uqSvgRef = useRef<SVGSVGElement>(null);
 
 
-  // Reset animDone when phase changes
+  // Reset animDone and arcTriggered when phase changes
   useEffect(() => {
     setAnimDone(false);
+    setArcTriggered(false);
   }, [phase]);
 
   // Compass opening animation for task2-step0
@@ -312,9 +317,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     return () => clearInterval(id);
   }, [phase]);
 
-  // Arc sweep animation for task2-arc1
+  // Arc sweep animation for task2-arc1 (triggered by click)
   useEffect(() => {
-    if (phase !== 'task2-arc1') return;
+    if (phase !== 'task2-arc1' || !arcTriggered) return;
     setArcSweep(0);
     let cancelled = false;
     let frame = 0;
@@ -331,7 +336,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       }
     }, 16);
     return () => { cancelled = true; clearInterval(id); };
-  }, [phase]);
+  }, [phase, arcTriggered]);
 
   // Compass opening animation for task2-open2 (right side)
   useEffect(() => {
@@ -347,9 +352,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     return () => clearInterval(id);
   }, [phase]);
 
-  // Arc sweep animation for task2-arc2 (right side)
+  // Arc sweep animation for task2-arc2 (right side, triggered by click)
   useEffect(() => {
-    if (phase !== 'task2-arc2') return;
+    if (phase !== 'task2-arc2' || !arcTriggered) return;
     setArcSweep(0);
     let cancelled = false;
     let frame = 0;
@@ -366,7 +371,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       }
     }, 16);
     return () => { cancelled = true; clearInterval(id); };
-  }, [phase]);
+  }, [phase, arcTriggered]);
 
   // Congruent animation: trace once (3s), then flash and solidify
   useEffect(() => {
@@ -391,7 +396,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     }
 
     // Task 2: pin → arc → vertex → connect
-    if (phase === 'task2-pin' && dist(click, SSS_LEFT) < 40) {
+    // Compass hit test: check needle, pencil tip, and hinge
+    const compassHit = (needle: Point, pencilTarget: Point, click: Point) => {
+      const tiltFactor = 0.25;
+      const hinge = { x: needle.x + (pencilTarget.x - needle.x) * tiltFactor, y: needle.y - 75 };
+      return dist(click, needle) < 40 || dist(click, pencilTarget) < 40 || dist(click, hinge) < 40;
+    };
+    if (phase === 'task2-arc1' && !arcTriggered && compassHit(SSS_LEFT, { x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y }, click)) {
+      playSound('click'); setArcTriggered(true);
+    } else if (phase === 'task2-arc2' && !arcTriggered && compassHit(SSS_RIGHT, { x: SSS_RIGHT.x - SSS_C, y: SSS_RIGHT.y }, click)) {
+      playSound('click'); setArcTriggered(true);
+    } else if (phase === 'task2-pin' && dist(click, SSS_LEFT) < 40) {
       playSound('click'); setPhase('task2-step0');
     } else if (phase === 'task2-pin2' && dist(click, SSS_RIGHT) < 40) {
       playSound('click'); setPhase('task2-open2');
@@ -409,7 +424,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   // Global step list across all tasks
   const ALL_STEPS: Phase[] = [
     'task1-show', 'task1-ruler-src', 'task1-ruler-tgt', 'task1-done',
-    'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
+    'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-ruler2', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
     'task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
   ];
   const globalIdx = ALL_STEPS.indexOf(phase);
@@ -420,7 +435,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     || (phase === 'task2-unlocked' && uqShowBtn);
   const canGoPrev = globalIdx > 0;
   const canGoNext = globalIdx >= 0 && globalIdx < ALL_STEPS.length - 1
-    && (phaseAction === 'info' || (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone));
+    && (phaseAction === 'info' || (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone)
+      || ((phase === 'task2-arc1' || phase === 'task2-arc2') && animDone));
 
   // Reset all state for a clean task switch
   const resetTask1 = () => { setT1Done(false); };
@@ -449,6 +465,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     else if (target === 'task2-pin') { resetTask2(); setCompassSpread(0); setArcSweep(0); }
     else if (target === 'task2-step0') { resetTask2(); setCompassSpread(0); setArcSweep(0); }
     else if (target === 'task2-arc1') { resetTask2(); setCompassSpread(1); setArcSweep(0); }
+    else if (target === 'task2-ruler2') { setSssLines([]); setSssVertex(null); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }]); setCompassSpread(0); setArcSweep(0); }
     else if (target === 'task2-pin2') { setSssLines([]); setSssVertex(null); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }]); setCompassSpread(0); setArcSweep(0); }
     else if (target === 'task2-open2') { setSssLines([]); setSssVertex(null); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }]); setCompassSpread(0); setArcSweep(0); }
     else if (target === 'task2-arc2') { setSssLines([]); setSssVertex(null); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }]); setCompassSpread(1); setArcSweep(0); }
@@ -963,9 +980,17 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           {/* ═══ Task 2: SSS ═══ */}
           {phase.startsWith('task2') && (
             <>
-              {/* Bottom ruler: hidden during line draw/done phases */}
-              {phase !== 'task2-draw-l' && phase !== 'task2-done-l' && phase !== 'task2-draw-r' && phase !== 'task2-done-r' && phase !== 'task2-congruent' && (
-                (phase === 'task2-pin2' || phase === 'task2-open2' || phase === 'task2-arc2')
+              {/* Ruler on original triangle left edge (length 3) during task2-ruler */}
+              {phase === 'task2-ruler' && (
+                <RulerTool from={T1_SRC_A} to={T1_SRC_C} />
+              )}
+              {/* Ruler on original triangle right edge (length 4) during task2-ruler2 */}
+              {phase === 'task2-ruler2' && (
+                <RulerTool from={T1_SRC_B} to={T1_SRC_C} />
+              )}
+              {/* Bottom ruler: hidden during ruler/pin/line draw/done phases */}
+              {phase !== 'task2-ruler' && phase !== 'task2-ruler2' && phase !== 'task2-pin' && phase !== 'task2-pin2' && phase !== 'task2-step2' && phase !== 'task2-draw-l' && phase !== 'task2-done-l' && phase !== 'task2-draw-r' && phase !== 'task2-done-r' && phase !== 'task2-congruent' && (
+                (phase === 'task2-open2' || phase === 'task2-arc2')
                   ? <RulerTool from={{ x: SSS_LEFT.x + UNIT, y: SSS_LEFT.y }} to={{ x: SSS_RIGHT.x + UNIT, y: SSS_RIGHT.y }} />
                   : <RulerTool from={SSS_LEFT} to={SSS_RIGHT} />
               )}
@@ -1027,16 +1052,16 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
               {/* Tools */}
               {phase === 'task2-pin' && <AnimatedCompass needle={SSS_LEFT} pencilTarget={{ x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y }} spread={0} closed />}
               {phase === 'task2-step0' && <AnimatedCompass needle={SSS_LEFT} pencilTarget={{ x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y }} spread={compassSpread} />}
-              {/* Arc drawing animation: compass rotates from 0° upward to 180° */}
+              {/* Arc drawing animation: idle compass until clicked, then sweep */}
               {phase === 'task2-arc1' && (() => {
-                const cx = SSS_LEFT.x;
-                const cy = SSS_LEFT.y;
-                const r = SSS_B;
+                if (!arcTriggered) {
+                  return <AnimatedCompass needle={SSS_LEFT} pencilTarget={{ x: SSS_LEFT.x + SSS_B, y: SSS_LEFT.y }} spread={1} />;
+                }
+                const cx = SSS_LEFT.x, cy = SSS_LEFT.y, r = SSS_B;
                 const maxAngle = 90 * Math.PI / 180;
                 const angle = arcSweep * maxAngle;
                 const px = cx + r * Math.cos(-angle);
                 const py = cy + r * Math.sin(-angle);
-                // Arc path from (cx+r, cy) to current pencil position
                 const largeArc = angle > Math.PI ? 1 : 0;
                 const arcPath = arcSweep > 0.01
                   ? `M ${cx + r},${cy} A ${r},${r} 0 ${largeArc},0 ${px},${py}`
@@ -1052,14 +1077,13 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
               {phase === 'task2-pin2' && <AnimatedCompass needle={SSS_RIGHT} pencilTarget={{ x: SSS_RIGHT.x - SSS_C, y: SSS_RIGHT.y }} spread={0} closed />}
               {phase === 'task2-open2' && <AnimatedCompass needle={SSS_RIGHT} pencilTarget={{ x: SSS_RIGHT.x - SSS_C, y: SSS_RIGHT.y }} spread={compassSpread} />}
               {phase === 'task2-arc2' && (() => {
-                const cx = SSS_RIGHT.x;
-                const cy = SSS_RIGHT.y;
-                const r = SSS_C;
+                if (!arcTriggered) {
+                  return <AnimatedCompass needle={SSS_RIGHT} pencilTarget={{ x: SSS_RIGHT.x - SSS_C, y: SSS_RIGHT.y }} spread={1} />;
+                }
+                const cx = SSS_RIGHT.x, cy = SSS_RIGHT.y, r = SSS_C;
                 const maxAngle = 70 * Math.PI / 180;
                 const angle = arcSweep * maxAngle;
-                // Start from left of center (π direction), sweep clockwise upward
-                const startX = cx - r;
-                const startY = cy;
+                const startX = cx - r, startY = cy;
                 const px = cx + r * Math.cos(Math.PI - angle);
                 const py = cy - r * Math.sin(Math.PI - angle);
                 const largeArc = angle > Math.PI ? 1 : 0;
@@ -1159,7 +1183,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       {/* Bottom floating action bar */}
       <div style={{
         background: 'white', borderRadius: 14, border: '1px solid #E5E7EB',
-        padding: 'clamp(10px, 2vmin, 14px) clamp(14px, 2.5vmin, 20px)',
+        height: 'clamp(60px, 9vmin, 72px)', padding: '0 clamp(14px, 2.5vmin, 20px)',
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
         boxShadow: '0 -2px 12px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden',
       }}>
@@ -1167,15 +1191,14 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#E5E7EB', borderRadius: '14px 14px 0 0', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${((globalIdx + 1) / ALL_STEPS.length) * 100}%`, background: '#ee6c4d', transition: 'width 0.3s ease' }} />
         </div>
-        {/* Prev button */}
-        {canGoPrev && (
-          <button onClick={goToPrevStep} style={{
-            width: 32, height: 32, borderRadius: 8, border: 'none', background: 'transparent',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-        )}
+        {/* Prev button — always rendered to reserve space, hidden when not available */}
+        <button onClick={canGoPrev ? goToPrevStep : undefined} style={{
+          width: 32, height: 32, borderRadius: 8, border: 'none', background: 'transparent',
+          cursor: canGoPrev ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, padding: 0, visibility: canGoPrev ? 'visible' : 'hidden',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+        </button>
         {/* Pill label */}
         <span style={{
           padding: '2px 10px', borderRadius: 6, fontSize: 'clamp(15px, 2.5vmin, 18px)', fontWeight: 700,

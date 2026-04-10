@@ -14,7 +14,7 @@ export default function RevealStage({ onComplete }: { onComplete: () => void }) 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {phase === 'pre-dialog' && <DialogEngine lines={revealPreAnimDialog} onComplete={handlePreDone} />}
-      {phase === 'animation' && <ExteriorAngleAnim onComplete={handleAnimDone} />}
+      {phase === 'animation' && <ExteriorAngleAnim onComplete={handleAnimDone} onBack={() => setPhase('pre-dialog')} />}
       {phase === 'post-dialog' && <DialogEngine lines={revealPostAnimDialog} onComplete={onComplete} />}
     </div>
   );

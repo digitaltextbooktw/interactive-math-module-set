@@ -50,7 +50,7 @@ const B_SHIFT = 20;    // B sector shift right (sector extends left)
   6 — equation layout + 外角定理 + 繼續
 */
 
-export default function ExteriorAngleAnim({ onComplete }: { onComplete: () => void }) {
+export default function ExteriorAngleAnim({ onComplete, onBack }: { onComplete: () => void; onBack?: () => void }) {
   const [step, setStep] = useState(0);
   const [introAnim, setIntroAnim] = useState(0); // 0=idle, 1=line drawing, 2=sector appearing, 3=done
   const [introKey, setIntroKey] = useState(0);
@@ -67,12 +67,12 @@ export default function ExteriorAngleAnim({ onComplete }: { onComplete: () => vo
 
   const handlePrev = useCallback(() => {
     if (step === 0) {
-      // Replay intro animation
-      setIntroKey(k => k + 1);
+      if (onBack) onBack();
+      else setIntroKey(k => k + 1);
     } else {
       setStep(s => Math.max(0, s >= 6 ? 5 : s - 1));
     }
-  }, [step]);
+  }, [step, onBack]);
 
   const handleNext = useCallback(() => {
     if (step < 5) {
@@ -107,7 +107,7 @@ export default function ExteriorAngleAnim({ onComplete }: { onComplete: () => vo
             <>
               {/* Extension line — animated draw in step 0, toggle visibility by step */}
               {showExtLine && (
-                <line x1={C.x} y1={C.y} x2={ExtPoint.x} y2={ExtPoint.y}
+                <line key={`ext-${introKey}`} x1={C.x} y1={C.y} x2={ExtPoint.x} y2={ExtPoint.y}
                   stroke="#ee6c4d" strokeWidth="2.5" strokeDasharray={EXT_LINE_LEN}
                   strokeDashoffset={step === 0 && introAnim < 2 ? EXT_LINE_LEN - (introAnim >= 1 ? EXT_LINE_LEN : 0) : 0}
                   style={{
@@ -137,18 +137,17 @@ export default function ExteriorAngleAnim({ onComplete }: { onComplete: () => vo
               />
 
               {/* Exterior angle sector — step 0 animated (fill+stroke together), step 1 highlighted, hidden 2-3, back at 5 */}
-              {showExtSector && (
-                <path d={describeSector(C.x, C.y, R, ext_start, ext_end)}
-                  fill="#F0997B" stroke="#993C1D" strokeWidth="1.5"
-                  style={{
-                    opacity: step === 0
-                      ? (introAnim >= 2 ? 1 : 0)
-                      : 1,
-                    fillOpacity: step === 0 ? 0.3 : step === 1 ? 0.9 : 0,
-                    transition: 'opacity 1s ease-out, fill-opacity 0.6s',
-                  }}
-                />
-              )}
+              <path d={describeSector(C.x, C.y, R, ext_start, ext_end)}
+                fill="#F0997B" stroke="#993C1D" strokeWidth="1.5"
+                style={{
+                  opacity: showExtSector
+                    ? (step === 0 ? (introAnim >= 2 ? 1 : 0) : 1)
+                    : 0,
+                  fillOpacity: step === 1 ? 0.9 : 0.3,
+                  pointerEvents: showExtSector ? 'auto' : 'none',
+                  transition: 'opacity 1s ease-out, fill-opacity 0.6s',
+                }}
+              />
 
               {/* ∠A — rendered from step 2, flies at step 4 */}
               {showAB && (

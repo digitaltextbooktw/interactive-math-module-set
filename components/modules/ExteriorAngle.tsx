@@ -107,7 +107,13 @@ const ExteriorAngle: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ setI
                 <text x={A.x - 30} y={A.y + 5} fill="#3d5a80" className="font-black text-2xl select-none">A</text>
                 <text x={C.x} y={C.y + 30} fill="#3d5a80" className="font-black text-2xl select-none" textAnchor="middle">C</text>
                 <text x={A.x + 55} y={A.y - 10} fill="#3d5a80" fontSize="18" className="font-en font-bold select-none">{angles.A}°</text>
-                <text x={B.x} y={B.y - 30} textAnchor="middle" fill="#3d5a80" fontSize="18" className="font-en font-bold select-none">{angles.B}°</text>
+                {(() => {
+                    const a1 = Math.atan2(A.y - B.y, A.x - B.x);
+                    const a2 = Math.atan2(C.y - B.y, C.x - B.x);
+                    let diff = a2 - a1; while (diff > Math.PI) diff -= 2 * Math.PI; while (diff < -Math.PI) diff += 2 * Math.PI;
+                    const mid = a1 + diff / 2;
+                    return <text x={B.x + 60 * Math.cos(mid)} y={B.y + 60 * Math.sin(mid)} textAnchor="middle" dominantBaseline="central" fill="#3d5a80" fontSize="18" className="font-en font-bold select-none">{angles.B}°</text>;
+                })()}
                 <text x={C.x + 60} y={C.y - 15} fill="#ee6c4d" fontSize="18" className="font-en font-bold select-none">{angles.Ext}°</text>
             </svg>
             <div className="mt-10 text-2xl font-black text-[#ee6c4d] bg-white border-2 border-[#ee6c4d] px-10 py-4 rounded-3xl shadow-xl select-none">

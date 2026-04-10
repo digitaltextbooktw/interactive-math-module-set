@@ -9,5 +9,5 @@ export default function Level2Explore({ onComplete }: { onComplete: () => void }
     return <ExploreStage onComplete={() => setSection('anim')} />;
   }
 
-  return <ExteriorAngleAnim onComplete={onComplete} />;
+  return <ExteriorAngleAnim onComplete={onComplete} onBack={() => setSection('explore')} />;
 }
