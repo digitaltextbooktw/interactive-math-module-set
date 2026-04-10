@@ -80,20 +80,21 @@ export default function QuizStage({ onComplete }: Props) {
   const [slideDir, setSlideDir] = useState<'in' | 'out' | null>('in');
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+  const transitionRef = useRef(false);
 
   const q = quizQuestions[qIdx];
   const answered = answers[qIdx];
 
   const handleAnswer = useCallback((idx: number) => {
     if (answered !== null) return;
-    const isCorrect = idx === q.correctIndex;
+    const isCorrect = idx === quizQuestions[qIdx].correctIndex;
 
     if (isCorrect) playSound('success');
     else playSound('wrong');
 
     setAnswers(prev => { const n = [...prev]; n[qIdx] = idx; return n; });
     setResults(prev => { const n = [...prev]; n[qIdx] = isCorrect; return n; });
-  }, [answered, q, qIdx]);
+  }, [answered, qIdx]);
 
   const allAnswered = answers.every(a => a !== null);
 
@@ -104,12 +105,15 @@ export default function QuizStage({ onComplete }: Props) {
   }, [answers]);
 
   const goTo = useCallback((dir: 'prev' | 'next') => {
+    if (transitionRef.current) return;
     const target = dir === 'prev' ? qIdx - 1 : qIdx + 1;
     if (target < 0 || target >= quizQuestions.length) return;
+    transitionRef.current = true;
     setSlideDir('out');
     setTimeout(() => {
       setQIdx(target);
       setSlideDir('in');
+      transitionRef.current = false;
     }, 200);
   }, [qIdx]);
 

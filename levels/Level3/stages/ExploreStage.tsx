@@ -246,6 +246,13 @@ const STEP_HINTS: Record<string, string> = {
   'task2-sss-done':    'SSS 全等性質確認完成！',
 };
 
+// Global step list across all tasks
+const ALL_STEPS: Phase[] = [
+  'task1-show', 'task1-ruler-src', 'task1-ruler-tgt', 'task1-done',
+  'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-ruler2', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
+  'task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
+];
+
 export default function ExploreStage({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState<Phase>('task1-show');
   const [compassSpread, setCompassSpread] = useState(0);
@@ -294,6 +301,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const [uqShowBtn, setUqShowBtn] = useState(false);
   const uqDragRef = useRef<null | 'p' | 'q' | 'r'>(null);
   const uqDragCount = useRef(0);
+  const uqFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uqSvgRef = useRef<SVGSVGElement>(null);
 
 
@@ -301,6 +309,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   useEffect(() => {
     setAnimDone(false);
     setArcTriggered(false);
+    if (uqFlashTimer.current) { clearTimeout(uqFlashTimer.current); uqFlashTimer.current = null; }
   }, [phase]);
 
   // Compass opening animation for task2-step0
@@ -421,12 +430,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
   }, [phase, arcTriggered, onComplete]);
 
-  // Global step list across all tasks
-  const ALL_STEPS: Phase[] = [
-    'task1-show', 'task1-ruler-src', 'task1-ruler-tgt', 'task1-done',
-    'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-ruler2', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
-    'task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
-  ];
   const globalIdx = ALL_STEPS.indexOf(phase);
   const phaseAction = PHASE_ACTION[phase];
   // Drag phases: show next button when task-specific condition is met
@@ -438,20 +441,20 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     && (phaseAction === 'info' || (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone)
       || ((phase === 'task2-arc1' || phase === 'task2-arc2') && animDone));
 
-  // Reset all state for a clean task switch
-  const resetTask1 = () => { setT1Done(false); };
-  const resetTask2 = () => { setSssLines([]); setSssArcs([]); setSssVertex(null); };
-  const resetPuzzle = () => {
+  // Reset all state for a clean task switch (stable — only call state setters + module constants)
+  const resetTask1 = useCallback(() => { setT1Done(false); }, []);
+  const resetTask2 = useCallback(() => { setSssLines([]); setSssArcs([]); setSssVertex(null); }, []);
+  const resetPuzzle = useCallback(() => {
     setPzClosed(false);
     setPz3Snap(null); setPz4Snap(null);
     setPz3({ p1: { x: 340, y: 100 }, p2: { x: 460, y: 100 } });
     setPz4({ p1: { x: 360, y: 160 }, p2: { x: 520, y: 160 } });
-  };
-  const resetUnique = () => {
+  }, []);
+  const resetUnique = useCallback(() => {
     setUqR(UQ_R_FIXED); setUqP(UQ_P); setUqQ(UQ_Q);
     setUqArcFlash(false); setUqShowHint(false); setUqShowBtn(false);
     uqDragCount.current = 0; uqDragRef.current = null;
-  };
+  }, []);
 
   // Apply cumulative state so the target step renders correctly
   const applyStateForStep = useCallback((target: Phase) => {
@@ -481,7 +484,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     else if (target === 'task2-locked') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-unlocked') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-sss-done') { resetTask2(); resetPuzzle(); resetUnique(); }
-  }, []);
+  }, [resetTask1, resetTask2, resetPuzzle, resetUnique]);
 
   const goToPrevStep = useCallback(() => {
     if (globalIdx <= 0) return;
@@ -740,7 +743,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!uqDragRef.current) return;
             const ox = (Math.random() - 0.5) * 4, oy = (Math.random() - 0.5) * 4;
             setUqR({ x: UQ_R_FIXED.x + ox, y: UQ_R_FIXED.y + oy });
-            setUqArcFlash(true); setTimeout(() => setUqArcFlash(false), 150);
+            setUqArcFlash(true);
+            if (uqFlashTimer.current) clearTimeout(uqFlashTimer.current);
+            uqFlashTimer.current = setTimeout(() => { setUqArcFlash(false); uqFlashTimer.current = null; }, 150);
           };
           const onUpL = () => {
             if (!uqDragRef.current) return;

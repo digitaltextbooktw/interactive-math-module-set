@@ -27,7 +27,6 @@ function TriPanel({ type }: { type: Tab }) {
   const base = BASE_TRI[type];
   const [scale, setScale] = useState(1);
   const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
   const [showSnap, setShowSnap] = useState(false);
   const dragStart = useRef<Point | null>(null);
 
@@ -64,28 +63,25 @@ function TriPanel({ type }: { type: Tab }) {
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    (e.target as Element).setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY };
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging || !dragStart.current) return;
+    if (!dragStart.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
 
     if (type === 'aaa') {
-      // Scale based on vertical drag
       const newScale = Math.max(0.4, Math.min(2.0, 1 + dy / -150));
       setScale(newScale);
     } else {
-      // SSS/SAS: allow small offset, show red border
       setDragOffset({ x: dx * 0.3, y: dy * 0.3 });
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) setShowSnap(true);
     }
-  }, [isDragging, type]);
+  }, [type]);
 
   const handlePointerUp = useCallback(() => {
-    setIsDragging(false);
     dragStart.current = null;
     if (isLocked) {
       setDragOffset({ x: 0, y: 0 });
@@ -180,7 +176,7 @@ export default function RevealStage({ onComplete }: { onComplete: () => void }) 
       padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)',
       gap: 'clamp(6px, 1vmin, 10px)',
       fontFamily: 'var(--font-main)',
-      touchAction: 'manipulation',
+      touchAction: 'none',
     }}>
       {/* Title */}
       <div style={{

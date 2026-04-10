@@ -15,7 +15,13 @@
 | 3-4 中垂線與角平分線性質 | 面積計算 | 逐步動畫展示底 x 高 / 2 |
 | 3-5 三角形的邊角關係 | 邊長關係 | 滑桿調整邊長驗證三角不等式 |
 
-部分模組附有**練習模式**（操作探索 + 概念檢核）。
+部分模組附有**練習模式**（操作探索 + 概念檢核），包含三個關卡：
+
+| 關卡 | 主題 | 流程 |
+|------|------|------|
+| Level 1 | 三角形的角 | 探索 → 猜測 → 撕角動畫揭示 → 測驗 → 結果 |
+| Level 2 | 外角關係 | 探索 → 猜測 → 外角拼湊動畫揭示 → 測驗 → 結果 |
+| Level 3 | 全等判定 | SSS 尺規作圖探索 → SSS/SAS/AAA 比較揭示 → 測驗 |
 
 ## 快速開始
 
@@ -28,17 +34,20 @@ npm run dev      # http://localhost:3000
 
 - React 19 + TypeScript + Vite
 - Tailwind CSS (CDN)
-- 字體：Zen Maru Gothic（主）、Nunito（數字/英文）
-- 純 SVG 互動圖形，需支援滑鼠與觸控
+- 字體：源泉圓體 GenSenRounded（主）、Nunito（數字/英文��、Noto Sans TC（備用）
+- 純 SVG 互動圖形，支援滑鼠與觸控
 
 ## 專案結構
 
 ```
 App.tsx                  # 首頁路由、模組頁面、練習模式
-components/modules/      # 各幾何互動模組
+components/modules/      # 各幾何互動模組（自由操作模式）
 components/practice/     # 練習模式外殼
-levels/                  # 練習關卡 (Level1: 三角形的角, Level2: 外角關係)
-utils/                   # 工具函式 (音效、排版切換)
+levels/                  # 練習關卡
+  Level1/                # 三角形的角
+  Level2/                # 外角關係
+  Level3/                # 全等判定（SSS/SAS/AAA）
+utils/                   # 工具函式（音效、排版切換）
 ```
 
 ## License
