@@ -419,7 +419,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       playSound('success'); setPhase('task2-done-r');
     }
 
-  }, [phase, onComplete]);
+  }, [phase, arcTriggered, onComplete]);
 
   // Global step list across all tasks
   const ALL_STEPS: Phase[] = [
@@ -504,6 +504,13 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
   const isLastStep = globalIdx === ALL_STEPS.length - 1;
 
+  // Check if unlocked triangle matches 3-4-5
+  const uqSides = [dist(uqP, uqQ) / UNIT, dist(uqP, uqR) / UNIT, dist(uqQ, uqR) / UNIT]
+    .map(s => Math.round(s * 10) / 10).sort((a, b) => a - b);
+  const uqIsInt = (v: number) => Math.abs(v - Math.round(v)) < 0.001;
+  const uqAllMatch = uqIsInt(uqSides[0]) && uqIsInt(uqSides[1]) && uqIsInt(uqSides[2])
+    && Math.round(uqSides[0]) === 3 && Math.round(uqSides[1]) === 4 && Math.round(uqSides[2]) === 5;
+
   const hintText = STEP_HINTS[phase] ?? '';
   const taskNum = phase.startsWith('task1') ? 1 : 2;
   const actionLabel = (phaseAction === 'auto' && animDone) || (phaseAction === 'drag' && dragDone) ? ACTION_LABELS.info : ACTION_LABELS[phaseAction];
@@ -528,7 +535,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     return (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-main)',
         padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)', gap: 'clamp(6px, 1vmin, 10px)', boxSizing: 'border-box',
-        touchAction: 'manipulation' }}>
+        touchAction: 'none' }}>
 
         {/* Question card — inline, not modal */}
         {phase === 'task2-question' && (
@@ -556,8 +563,10 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!svg) return null;
             const ctm = svg.getScreenCTM();
             if (!ctm) return null;
-            const inv = ctm.inverse();
-            return { x: inv.a * e.clientX + inv.c * e.clientY + inv.e, y: inv.b * e.clientX + inv.d * e.clientY + inv.f };
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX; pt.y = e.clientY;
+            const svgPt = pt.matrixTransform(ctm.inverse());
+            return { x: svgPt.x, y: svgPt.y };
           };
           const clp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
           const onDown = (e: React.PointerEvent, seg: '3' | '4') => {
@@ -723,7 +732,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
         {/* ═══ Locked drag: all 3 vertices draggable but locked ═══ */}
         {phase === 'task2-locked' && (() => {
-          const [shakeOff, setShakeOff] = [{ x: 0, y: 0 }, (v: Point) => {}]; // placeholder, use uqR for shake
           const onDownL = (e: React.PointerEvent) => {
             e.preventDefault(); (e.target as Element).setPointerCapture(e.pointerId);
             uqDragRef.current = 'r'; playSound('click');
@@ -741,9 +749,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (uqDragCount.current >= 3) setUqShowHint(true);
             if (uqDragCount.current >= 5) setUqShowBtn(true);
           };
-          const bMid = { x: (UQ_P.x + UQ_Q.x) / 2, y: UQ_P.y + 18 };
-          const lMid = { x: (UQ_P.x + uqR.x) / 2 - 14, y: (UQ_P.y + uqR.y) / 2 };
-          const rMid = { x: (UQ_Q.x + uqR.x) / 2 + 14, y: (UQ_Q.y + uqR.y) / 2 };
           // Shake offset applied to all vertices when dragging
           const shk = uqDragRef.current ? { x: uqR.x - UQ_R_FIXED.x, y: uqR.y - UQ_R_FIXED.y } : { x: 0, y: 0 };
           const pShk = { x: UQ_P.x + shk.x, y: UQ_P.y + shk.y };
@@ -766,7 +771,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 ))}
               </svg>
               {uqShowHint && (
-                <div style={{ position: 'absolute', bottom: uqShowBtn ? 60 : 16, left: '50%', transform: 'translateX(-50%)',
+                <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
                   background: 'rgba(41,50,65,0.9)', color: 'white', borderRadius: 10, padding: '8px 16px', fontSize: 14, fontWeight: 600, textAlign: 'center', maxWidth: '80%' }}>
                   三條邊的長度鎖死了，頂點只能待在固定位置上。
                 </div>
@@ -782,8 +787,10 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!svg) return null;
             const ctm = svg.getScreenCTM();
             if (!ctm) return null;
-            const inv = ctm.inverse();
-            return { x: inv.a * e.clientX + inv.c * e.clientY + inv.e, y: inv.b * e.clientX + inv.d * e.clientY + inv.f };
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX; pt.y = e.clientY;
+            const svgPt = pt.matrixTransform(ctm.inverse());
+            return { x: svgPt.x, y: svgPt.y };
           };
           const onDownU = (e: React.PointerEvent, which: 'p' | 'q' | 'r') => {
             e.preventDefault(); (e.target as Element).setPointerCapture(e.pointerId);
@@ -809,16 +816,10 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           const sA = Math.round(dist(uqP, uqQ) / UNIT * 10) / 10; // base
           const sB = Math.round(dist(uqP, uqR) / UNIT * 10) / 10; // left
           const sC = Math.round(dist(uqQ, uqR) / UNIT * 10) / 10; // right
-          // Strict match: must be exactly the integer value (tolerance < 0.05)
-          const aOk = Math.abs(sA - 5) < 0.05;
-          const bOk = Math.abs(sB - 3) < 0.05;
-          const cOk = Math.abs(sC - 4) < 0.05;
-          const bMid = { x: (uqP.x + uqQ.x) / 2, y: Math.max(uqP.y, uqQ.y) + 18 };
-          const lMid = { x: (uqP.x + uqR.x) / 2 - 14, y: (uqP.y + uqR.y) / 2 };
-          const rMid = { x: (uqQ.x + uqR.x) / 2 + 14, y: (uqQ.y + uqR.y) / 2 };
           return (
             <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
-              <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}>
+              <svg ref={uqSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
+                onPointerMove={onMoveU} onPointerUp={onUpU}>
                 {/* Left: original triangle (原件) */}
                 <OriginalTriangle />
 
@@ -826,24 +827,24 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                 <polygon points={`${UQ_P.x},${UQ_P.y} ${UQ_Q.x},${UQ_Q.y} ${UQ_R_FIXED.x},${UQ_R_FIXED.y}`}
                   fill="#98c1d9" fillOpacity={0.12} stroke="#98c1d9" strokeWidth={1} strokeDasharray="4 3" />
                 {/* Right: current triangle */}
-                <line x1={uqP.x} y1={uqP.y} x2={uqQ.x} y2={uqQ.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={aOk ? undefined : '4 3'} />
-                <line x1={uqP.x} y1={uqP.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={bOk ? undefined : '4 3'} />
-                <line x1={uqQ.x} y1={uqQ.y} x2={uqR.x} y2={uqR.y} stroke="#ee6c4d" strokeWidth={1.5} strokeDasharray={cOk ? undefined : '4 3'} />
-                <text x={bMid.x} y={bMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={aOk ? '#3d5a80' : '#ee6c4d'}>{sA}</text>
-                <text x={lMid.x} y={lMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={bOk ? '#3d5a80' : '#ee6c4d'}>{sB}</text>
-                <text x={rMid.x} y={rMid.y} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={cOk ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
+                <line x1={uqP.x} y1={uqP.y} x2={uqQ.x} y2={uqQ.y} stroke={uqAllMatch ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={uqAllMatch ? undefined : '4 3'} />
+                <line x1={uqP.x} y1={uqP.y} x2={uqR.x} y2={uqR.y} stroke={uqAllMatch ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={uqAllMatch ? undefined : '4 3'} />
+                <line x1={uqQ.x} y1={uqQ.y} x2={uqR.x} y2={uqR.y} stroke={uqAllMatch ? '#3d5a80' : '#ee6c4d'} strokeWidth={1.5} strokeDasharray={uqAllMatch ? undefined : '4 3'} />
+                <text x={(uqP.x + uqQ.x) / 2} y={Math.max(uqP.y, uqQ.y) + 18} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={uqAllMatch ? '#3d5a80' : '#ee6c4d'}>{sA}</text>
+                <text x={(uqP.x + uqR.x) / 2 - 14} y={(uqP.y + uqR.y) / 2} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={uqAllMatch ? '#3d5a80' : '#ee6c4d'}>{sB}</text>
+                <text x={(uqQ.x + uqR.x) / 2 + 14} y={(uqQ.y + uqR.y) / 2} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill={uqAllMatch ? '#3d5a80' : '#ee6c4d'}>{sC}</text>
                 {/* All 3 draggable vertices */}
                 <circle cx={uqP.x} cy={uqP.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} onPointerMove={onMoveU} onPointerUp={onUpU} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'p')} />
                 <circle cx={uqQ.x} cy={uqQ.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'q')} onPointerMove={onMoveU} onPointerUp={onUpU} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'q')} />
                 <circle cx={uqR.x} cy={uqR.y} r={8} fill="white" stroke="#ee6c4d" strokeWidth={2}
-                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'r')} onPointerMove={onMoveU} onPointerUp={onUpU} />
+                  style={{ cursor: 'grab' }} onPointerDown={e => onDownU(e, 'r')} />
               </svg>
-              {uqShowHint && (
-                <div style={{ position: 'absolute', bottom: uqShowBtn ? 60 : 16, left: '50%', transform: 'translateX(-50%)',
-                  background: 'rgba(41,50,65,0.9)', color: 'white', borderRadius: 10, padding: '8px 16px', fontSize: 14, fontWeight: 600, textAlign: 'center', maxWidth: '80%' }}>
-                  邊長一變，三角形就變了——跟原來的不一樣了。
+              {(uqShowHint || uqAllMatch) && (
+                <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+                  background: uqAllMatch ? 'rgba(16,185,129,0.9)' : 'rgba(41,50,65,0.9)', color: 'white', borderRadius: 10, padding: '8px 16px', fontSize: 14, fontWeight: 600, textAlign: 'center', maxWidth: '80%' }}>
+                  {uqAllMatch ? '當兩個三角形邊長相同，就會是全等三角形' : '邊長一變，三角形就變了——跟原來的不一樣了。'}
                 </div>
               )}
             </div>
@@ -917,7 +918,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
       padding: 'clamp(8px, 1.5vmin, 12px) clamp(8px, 2vmin, 16px)',
       gap: 'clamp(6px, 1vmin, 10px)',
       fontFamily: 'var(--font-main)', position: 'relative',
-      touchAction: 'manipulation',
+      touchAction: 'none',
     }}>
       {/* SVG — now first (top), instruction bar moved to bottom */}
       <div style={{
