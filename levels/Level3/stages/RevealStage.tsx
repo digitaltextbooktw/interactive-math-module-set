@@ -63,7 +63,6 @@ function TriPanel({ type }: { type: Tab }) {
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
-    (e.target as Element).setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY };
   }, []);
 
@@ -112,6 +111,49 @@ function TriPanel({ type }: { type: Tab }) {
       setShowSnap(false);
     }
   }, [isLocked]);
+
+  const moveFromClient = useCallback((clientX: number, clientY: number) => {
+    if (!dragStart.current) return;
+    const dx = clientX - dragStart.current.x;
+    const dy = clientY - dragStart.current.y;
+
+    if (type === 'aaa') {
+      const newScale = Math.max(0.4, Math.min(2.0, 1 + dy / -150));
+      setScale(newScale);
+    } else {
+      setDragOffset({ x: dx * 0.3, y: dy * 0.3 });
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) setShowSnap(true);
+    }
+  }, [type]);
+
+  React.useEffect(() => {
+    const onPointerMoveWindow = (e: PointerEvent) => moveFromClient(e.clientX, e.clientY);
+    const onPointerUpWindow = () => handlePointerUp();
+    const onTouchMoveWindow = (e: TouchEvent) => {
+      if (!dragStart.current) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      e.preventDefault();
+      moveFromClient(touch.clientX, touch.clientY);
+    };
+    const onTouchEndWindow = () => handlePointerUp();
+
+    window.addEventListener('pointermove', onPointerMoveWindow);
+    window.addEventListener('pointerup', onPointerUpWindow);
+    window.addEventListener('pointercancel', onPointerUpWindow);
+    window.addEventListener('touchmove', onTouchMoveWindow, { passive: false });
+    window.addEventListener('touchend', onTouchEndWindow);
+    window.addEventListener('touchcancel', onTouchEndWindow);
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMoveWindow);
+      window.removeEventListener('pointerup', onPointerUpWindow);
+      window.removeEventListener('pointercancel', onPointerUpWindow);
+      window.removeEventListener('touchmove', onTouchMoveWindow);
+      window.removeEventListener('touchend', onTouchEndWindow);
+      window.removeEventListener('touchcancel', onTouchEndWindow);
+    };
+  }, [moveFromClient, handlePointerUp]);
 
   const borderColor = showSnap && isLocked ? '#EF4444' : '#E5E7EB';
 

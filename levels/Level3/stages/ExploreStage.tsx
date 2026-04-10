@@ -292,6 +292,11 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const [pzClosed, setPzClosed] = useState(false);
   const pzDragRef = useRef<{ seg: '3' | '4'; startMouse: Point; startP1: Point; startP2: Point } | null>(null);
   const pzSvgRef = useRef<SVGSVGElement>(null);
+  const pz3Ref = useRef(pz3);
+  const pz4Ref = useRef(pz4);
+  const pz3SnapRef = useRef(pz3Snap);
+  const pz4SnapRef = useRef(pz4Snap);
+  const pzClosedRef = useRef(pzClosed);
 
   // Uniqueness state (task2-locked / task2-unlocked) — right side of split layout
   const UQ_P = { x: 310, y: 200 };
@@ -310,6 +315,9 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const uqDragCount = useRef(0);
   const uqFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uqSvgRef = useRef<SVGSVGElement>(null);
+  const uqPRef = useRef(uqP);
+  const uqQRef = useRef(uqQ);
+  const uqRRef = useRef(uqR);
 
   const getTouchPoint = useCallback((e: TouchLikeEvent): Point | null => {
     const touch = e.touches[0] || e.changedTouches[0];
@@ -335,6 +343,15 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     setArcTriggered(false);
     if (uqFlashTimer.current) { clearTimeout(uqFlashTimer.current); uqFlashTimer.current = null; }
   }, [phase]);
+
+  useEffect(() => { pz3Ref.current = pz3; }, [pz3]);
+  useEffect(() => { pz4Ref.current = pz4; }, [pz4]);
+  useEffect(() => { pz3SnapRef.current = pz3Snap; }, [pz3Snap]);
+  useEffect(() => { pz4SnapRef.current = pz4Snap; }, [pz4Snap]);
+  useEffect(() => { pzClosedRef.current = pzClosed; }, [pzClosed]);
+  useEffect(() => { uqPRef.current = uqP; }, [uqP]);
+  useEffect(() => { uqQRef.current = uqQ; }, [uqQ]);
+  useEffect(() => { uqRRef.current = uqR; }, [uqR]);
 
   // Compass opening animation for task2-step0
   useEffect(() => {
@@ -453,6 +470,159 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     }
 
   }, [phase, arcTriggered, onComplete]);
+
+  const movePuzzleDrag = useCallback((pt: Point) => {
+    const d = pzDragRef.current;
+    if (!d) return;
+    const SNAP = 14;
+    const seg3Len = 3 * UNIT;
+    const seg4Len = 4 * UNIT;
+    const clp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+    const segLen = d.seg === '3' ? seg3Len : seg4Len;
+    const snap = d.seg === '3' ? pz3SnapRef.current : pz4SnapRef.current;
+    const setCur = d.seg === '3' ? setPz3 : setPz4;
+    const target = d.seg === '3' ? PZ_BASE_L : PZ_BASE_R;
+
+    if (snap) {
+      const ang = Math.atan2(pt.y - target.y, pt.x - target.x);
+      const free = { x: clp(target.x + segLen * Math.cos(ang), 10, 540), y: clp(target.y + segLen * Math.sin(ang), 10, 310) };
+      setCur(snap === 'p1' ? { p1: target, p2: free } : { p1: free, p2: target });
+      const otherSnap = d.seg === '3' ? pz4SnapRef.current : pz3SnapRef.current;
+      if (otherSnap && !pzClosedRef.current) {
+        const otherSeg = d.seg === '3' ? pz4Ref.current : pz3Ref.current;
+        const otherTarget = d.seg === '3' ? PZ_BASE_R : PZ_BASE_L;
+        const otherFree = otherSnap === 'p1' ? otherSeg.p2 : otherSeg.p1;
+        if (dist(free, otherFree) < 10) {
+          const avg = { x: (free.x + otherFree.x) / 2, y: (free.y + otherFree.y) / 2 };
+          setCur(snap === 'p1' ? { p1: target, p2: avg } : { p1: avg, p2: target });
+          const setOther = d.seg === '3' ? setPz4 : setPz3;
+          setOther(otherSnap === 'p1' ? { p1: otherTarget, p2: avg } : { p1: avg, p2: otherTarget });
+          setPzClosed(true);
+          playSound('success');
+          pzDragRef.current = null;
+        }
+      }
+    } else {
+      const dx = pt.x - d.startMouse.x;
+      const dy = pt.y - d.startMouse.y;
+      const np1 = { x: clp(d.startP1.x + dx, 10, 540), y: clp(d.startP1.y + dy, 10, 310) };
+      const np2 = { x: clp(d.startP2.x + dx, 10, 540), y: clp(d.startP2.y + dy, 10, 310) };
+      setCur({ p1: np1, p2: np2 });
+      const setSnap = d.seg === '3' ? setPz3Snap : setPz4Snap;
+      if (dist(np1, target) < SNAP) {
+        const ang = Math.atan2(np2.y - target.y, np2.x - target.x);
+        setCur({ p1: target, p2: { x: target.x + segLen * Math.cos(ang), y: target.y + segLen * Math.sin(ang) } });
+        setSnap('p1');
+        playSound('click');
+      } else if (dist(np2, target) < SNAP) {
+        const ang = Math.atan2(np1.y - target.y, np1.x - target.x);
+        setCur({ p1: { x: target.x + segLen * Math.cos(ang), y: target.y + segLen * Math.sin(ang) }, p2: target });
+        setSnap('p2');
+        playSound('click');
+      }
+    }
+  }, [PZ_BASE_L, PZ_BASE_R]);
+
+  const endPuzzleDrag = useCallback(() => {
+    pzDragRef.current = null;
+  }, []);
+
+  const moveLockedDrag = useCallback(() => {
+    if (!uqDragRef.current) return;
+    const ox = (Math.random() - 0.5) * 4;
+    const oy = (Math.random() - 0.5) * 4;
+    setUqR({ x: UQ_R_FIXED.x + ox, y: UQ_R_FIXED.y + oy });
+    setUqArcFlash(true);
+    if (uqFlashTimer.current) clearTimeout(uqFlashTimer.current);
+    uqFlashTimer.current = setTimeout(() => { setUqArcFlash(false); uqFlashTimer.current = null; }, 150);
+  }, [UQ_R_FIXED.x, UQ_R_FIXED.y]);
+
+  const endLockedDrag = useCallback(() => {
+    if (!uqDragRef.current) return;
+    uqDragRef.current = null;
+    setUqR(UQ_R_FIXED);
+    uqDragCount.current++;
+    if (uqDragCount.current >= 3) setUqShowHint(true);
+    if (uqDragCount.current >= 5) setUqShowBtn(true);
+  }, [UQ_R_FIXED]);
+
+  const moveUnlockedDrag = useCallback((pt: Point) => {
+    if (!uqDragRef.current) return;
+    const clamped = { x: Math.max(280, Math.min(540, pt.x)), y: Math.max(30, Math.min(290, pt.y)) };
+    if (uqDragRef.current === 'p') setUqP(clamped);
+    else if (uqDragRef.current === 'q') setUqQ(clamped);
+    else setUqR(clamped);
+  }, []);
+
+  const endUnlockedDrag = useCallback(() => {
+    if (!uqDragRef.current) return;
+    uqDragRef.current = null;
+    uqDragCount.current++;
+    if (uqDragCount.current >= 3) setUqShowHint(true);
+    if (uqDragCount.current >= 5) setUqShowBtn(true);
+  }, []);
+
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      if (phase === 'task2-puzzle-drag' && pzDragRef.current) {
+        const pt = clientToSvgPoint(pzSvgRef.current, e.clientX, e.clientY);
+        if (pt) movePuzzleDrag(pt);
+      }
+      if (phase === 'task2-locked' && uqDragRef.current) {
+        moveLockedDrag();
+      }
+      if (phase === 'task2-unlocked' && uqDragRef.current) {
+        const pt = clientToSvgPoint(uqSvgRef.current, e.clientX, e.clientY);
+        if (pt) moveUnlockedDrag(pt);
+      }
+    };
+    const onPointerUp = () => {
+      if (phase === 'task2-puzzle-drag') endPuzzleDrag();
+      if (phase === 'task2-locked') endLockedDrag();
+      if (phase === 'task2-unlocked') endUnlockedDrag();
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (phase === 'task2-puzzle-drag' && pzDragRef.current) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        e.preventDefault();
+        const pt = clientToSvgPoint(pzSvgRef.current, touch.clientX, touch.clientY);
+        if (pt) movePuzzleDrag(pt);
+      }
+      if (phase === 'task2-locked' && uqDragRef.current) {
+        e.preventDefault();
+        moveLockedDrag();
+      }
+      if (phase === 'task2-unlocked' && uqDragRef.current) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        e.preventDefault();
+        const pt = clientToSvgPoint(uqSvgRef.current, touch.clientX, touch.clientY);
+        if (pt) moveUnlockedDrag(pt);
+      }
+    };
+    const onTouchEnd = () => {
+      if (phase === 'task2-puzzle-drag') endPuzzleDrag();
+      if (phase === 'task2-locked') endLockedDrag();
+      if (phase === 'task2-unlocked') endUnlockedDrag();
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+    window.addEventListener('touchcancel', onTouchEnd);
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [phase, clientToSvgPoint, movePuzzleDrag, endPuzzleDrag, moveLockedDrag, endLockedDrag, moveUnlockedDrag, endUnlockedDrag]);
 
   const globalIdx = ALL_STEPS.indexOf(phase);
   const phaseAction = PHASE_ACTION[phase];
@@ -582,9 +752,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
         {/* ═══ Puzzle: drag segments freely, snap to base endpoints ═══ */}
         {(phase === 'task2-puzzle' || phase === 'task2-puzzle-drag') && (() => {
-          const SNAP = 14;
-          const seg3Len = 3 * UNIT; // 120px
-          const seg4Len = 4 * UNIT; // 160px
           const toSvg = (e: React.PointerEvent): Point | null => {
             return clientToSvgPoint(pzSvgRef.current, e.clientX, e.clientY);
           };
@@ -592,7 +759,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             const touch = getTouchPoint(e);
             return touch ? clientToSvgPoint(pzSvgRef.current, touch.x, touch.y) : null;
           };
-          const clp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
           const startDrag = (seg: '3' | '4', pt: Point) => {
             if (pzClosed) return;
             const cur = seg === '3' ? pz3 : pz4;
@@ -600,7 +766,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
           };
           const onDown = (e: React.PointerEvent, seg: '3' | '4') => {
             e.preventDefault(); e.stopPropagation();
-            pzSvgRef.current?.setPointerCapture(e.pointerId);
             const pt = toSvg(e);
             if (!pt) return;
             startDrag(seg, pt);
@@ -612,64 +777,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!pt) return;
             startDrag(seg, pt);
           };
-          const moveDrag = (pt: Point) => {
-            const d = pzDragRef.current;
-            if (!d) return;
-            const segLen = d.seg === '3' ? seg3Len : seg4Len;
-            const snap = d.seg === '3' ? pz3Snap : pz4Snap;
-            const setCur = d.seg === '3' ? setPz3 : setPz4;
-            const target = d.seg === '3' ? PZ_BASE_L : PZ_BASE_R;
-
-            if (snap) {
-              // Snapped: rotate around anchor point
-              const ang = Math.atan2(pt.y - target.y, pt.x - target.x);
-              const free = { x: clp(target.x + segLen * Math.cos(ang), 10, 540), y: clp(target.y + segLen * Math.sin(ang), 10, 310) };
-              setCur(snap === 'p1' ? { p1: target, p2: free } : { p1: free, p2: target });
-              // Check triangle closure with updated position
-              const otherSnap = d.seg === '3' ? pz4Snap : pz3Snap;
-              if (otherSnap && !pzClosed) {
-                const otherSeg = d.seg === '3' ? pz4 : pz3;
-                const otherTarget = d.seg === '3' ? PZ_BASE_R : PZ_BASE_L;
-                const otherFree = otherSnap === 'p1' ? otherSeg.p2 : otherSeg.p1;
-                if (dist(free, otherFree) < 10) {
-                  const avg = { x: (free.x + otherFree.x) / 2, y: (free.y + otherFree.y) / 2 };
-                  setCur(snap === 'p1' ? { p1: target, p2: avg } : { p1: avg, p2: target });
-                  const setOther = d.seg === '3' ? setPz4 : setPz3;
-                  setOther(otherSnap === 'p1' ? { p1: otherTarget, p2: avg } : { p1: avg, p2: otherTarget });
-                  setPzClosed(true); playSound('success'); pzDragRef.current = null;
-                }
-              }
-            } else {
-              // Not snapped: translate entire segment
-              const dx = pt.x - d.startMouse.x, dy = pt.y - d.startMouse.y;
-              const np1 = { x: clp(d.startP1.x + dx, 10, 540), y: clp(d.startP1.y + dy, 10, 310) };
-              const np2 = { x: clp(d.startP2.x + dx, 10, 540), y: clp(d.startP2.y + dy, 10, 310) };
-              setCur({ p1: np1, p2: np2 });
-              // Check if either end gets near target snap point
-              const setSnap = d.seg === '3' ? setPz3Snap : setPz4Snap;
-              if (dist(np1, target) < SNAP) {
-                const ang = Math.atan2(np2.y - target.y, np2.x - target.x);
-                setCur({ p1: target, p2: { x: target.x + segLen * Math.cos(ang), y: target.y + segLen * Math.sin(ang) } });
-                setSnap('p1'); playSound('click');
-              } else if (dist(np2, target) < SNAP) {
-                const ang = Math.atan2(np1.y - target.y, np1.x - target.x);
-                setCur({ p1: { x: target.x + segLen * Math.cos(ang), y: target.y + segLen * Math.sin(ang) }, p2: target });
-                setSnap('p2'); playSound('click');
-              }
-            }
-          };
-          const onMove = (e: React.PointerEvent) => {
-            const pt = toSvg(e);
-            if (!pt) return;
-            moveDrag(pt);
-          };
-          const onTouchMove = (e: React.TouchEvent) => {
-            e.preventDefault();
-            const pt = toSvgTouch(e);
-            if (!pt) return;
-            moveDrag(pt);
-          };
-          const onUp = () => { pzDragRef.current = null; };
           const free3 = pz3Snap ? (pz3Snap === 'p1' ? pz3.p2 : pz3.p1) : null;
           const free4 = pz4Snap ? (pz4Snap === 'p1' ? pz4.p2 : pz4.p1) : null;
           const hint = !pz3Snap && !pz4Snap ? '拖動線段，把端點靠近底邊兩端會自動吸附'
@@ -679,14 +786,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
           return (
               <div style={{ flex: 1, background: 'white', borderRadius: 14, border: '1px solid #E5E7EB', overflow: 'hidden', position: 'relative' }}>
-                <svg ref={pzSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
-                  onPointerMove={phase === 'task2-puzzle-drag' ? onMove : undefined}
-                  onPointerUp={phase === 'task2-puzzle-drag' ? onUp : undefined}
-                  onPointerLeave={phase === 'task2-puzzle-drag' ? onUp : undefined}
-                  onPointerCancel={phase === 'task2-puzzle-drag' ? onUp : undefined}
-                  onTouchMove={phase === 'task2-puzzle-drag' ? onTouchMove : undefined}
-                  onTouchEnd={phase === 'task2-puzzle-drag' ? onUp : undefined}
-                  onTouchCancel={phase === 'task2-puzzle-drag' ? onUp : undefined}>
+                <svg ref={pzSvgRef} viewBox="0 0 550 320" style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}>
 
                   {/* Left: original triangle */}
                   <OriginalTriangle />
@@ -732,7 +832,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   {/* Segment 3 (purple) — always visible, drag body */}
                   <g>
                     <line x1={pz3.p1.x} y1={pz3.p1.y} x2={pz3.p2.x} y2={pz3.p2.y}
-                      stroke="transparent" strokeWidth={28} strokeLinecap="round"
+                      stroke="rgba(0,0,0,0.01)" strokeWidth={44} strokeLinecap="round"
+                      pointerEvents="stroke"
                       style={{ cursor: pzClosed ? 'default' : 'grab' }}
                       onPointerDown={e => onDown(e, '3')}
                       onTouchStart={e => onTouchStart(e, '3')} />
@@ -745,7 +846,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   {/* Segment 4 (teal) — always visible, drag body */}
                   <g>
                     <line x1={pz4.p1.x} y1={pz4.p1.y} x2={pz4.p2.x} y2={pz4.p2.y}
-                      stroke="transparent" strokeWidth={28} strokeLinecap="round"
+                      stroke="rgba(0,0,0,0.01)" strokeWidth={44} strokeLinecap="round"
+                      pointerEvents="stroke"
                       style={{ cursor: pzClosed ? 'default' : 'grab' }}
                       onPointerDown={e => onDown(e, '4')}
                       onTouchStart={e => onTouchStart(e, '4')} />
@@ -775,6 +877,23 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     </>
                   )}
                 </svg>
+                {phase === 'task2-puzzle-drag' && (
+                  <div style={{
+                    position: 'absolute',
+                    right: 12,
+                    bottom: 10,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#64748B',
+                    background: 'rgba(255,255,255,0.92)',
+                    padding: '4px 8px',
+                    borderRadius: 999,
+                    border: '1px solid #E5E7EB',
+                    pointerEvents: 'none',
+                  }}>
+                    puzzle touch fix v3
+                  </div>
+                )}
 
               </div>
           );
@@ -793,14 +912,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             e.preventDefault();
             startLockedDrag();
           };
-          const moveLockedDrag = () => {
-            if (!uqDragRef.current) return;
-            const ox = (Math.random() - 0.5) * 4, oy = (Math.random() - 0.5) * 4;
-            setUqR({ x: UQ_R_FIXED.x + ox, y: UQ_R_FIXED.y + oy });
-            setUqArcFlash(true);
-            if (uqFlashTimer.current) clearTimeout(uqFlashTimer.current);
-            uqFlashTimer.current = setTimeout(() => { setUqArcFlash(false); uqFlashTimer.current = null; }, 150);
-          };
           const onMoveL = () => {
             moveLockedDrag();
           };
@@ -808,13 +919,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             e.preventDefault();
             moveLockedDrag();
           };
-          const onUpL = () => {
-            if (!uqDragRef.current) return;
-            uqDragRef.current = null; setUqR(UQ_R_FIXED);
-            uqDragCount.current++;
-            if (uqDragCount.current >= 3) setUqShowHint(true);
-            if (uqDragCount.current >= 5) setUqShowBtn(true);
-          };
+          const onUpL = () => { endLockedDrag(); };
           // Shake offset applied to all vertices when dragging
           const shk = uqDragRef.current ? { x: uqR.x - UQ_R_FIXED.x, y: uqR.y - UQ_R_FIXED.y } : { x: 0, y: 0 };
           const pShk = { x: UQ_P.x + shk.x, y: UQ_P.y + shk.y };
@@ -876,13 +981,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             e.preventDefault();
             uqDragRef.current = which; playSound('click');
           };
-          const moveUnlockedDrag = (pt: Point) => {
-            if (!uqDragRef.current) return;
-            const clamped = { x: Math.max(280, Math.min(540, pt.x)), y: Math.max(30, Math.min(290, pt.y)) };
-            if (uqDragRef.current === 'p') setUqP(clamped);
-            else if (uqDragRef.current === 'q') setUqQ(clamped);
-            else setUqR(clamped);
-          };
           const onMoveU = (e: React.PointerEvent) => {
             const pt = toSvg(e);
             if (!pt) return;
@@ -894,13 +992,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
             if (!pt) return;
             moveUnlockedDrag(pt);
           };
-          const onUpU = () => {
-            if (!uqDragRef.current) return;
-            uqDragRef.current = null;
-            uqDragCount.current++;
-            if (uqDragCount.current >= 3) setUqShowHint(true);
-            if (uqDragCount.current >= 5) setUqShowBtn(true);
-          };
+          const onUpU = () => { endUnlockedDrag(); };
           // Compute all 3 side lengths
           const sA = Math.round(dist(uqP, uqQ) / UNIT * 10) / 10; // base
           const sB = Math.round(dist(uqP, uqR) / UNIT * 10) / 10; // left
