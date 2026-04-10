@@ -211,38 +211,42 @@ const App: React.FC = () => {
 
     // --- Top toolbar (full-width, shared by both modes) ---
     const renderTopBar = () => (
-        <div className="flex items-center gap-3 shrink-0 mb-4 z-[60]">
-            <button
-                onClick={handleBackToHome}
-                className="bg-[#3d5a80] hover:bg-[#98c1d9] text-[#e0fbfc] hover:text-[#293241] rounded-full p-2.5 transition-colors shadow-lg shrink-0"
-            >
-                <ChevronLeftIcon className="w-5 h-5" />
-            </button>
-            <h1 className="text-[#e0fbfc] text-lg font-black truncate">
-                {modules[selectedModuleIndex].title}
-            </h1>
+        <div className={`flex ${isLandscape ? 'flex-row' : 'flex-row'} items-center gap-4 shrink-0 mb-4 z-[60] max-w-7xl mx-auto w-full`}>
+            <div className="flex items-center gap-3 flex-[60] min-w-0">
+                <button
+                    onClick={handleBackToHome}
+                    className="bg-[#3d5a80] hover:bg-[#98c1d9] text-[#e0fbfc] hover:text-[#293241] rounded-full p-2.5 transition-colors shadow-lg shrink-0"
+                >
+                    <ChevronLeftIcon className="w-5 h-5" />
+                </button>
+                <h1 className="text-[#e0fbfc] text-lg font-black truncate">
+                    {modules[selectedModuleIndex].title}
+                </h1>
+            </div>
             {hasPractice && (
-                <div className="flex bg-[#3d5a80] rounded-full p-1 shadow-lg ml-auto shrink-0">
-                    <button
-                        onClick={() => setPracticeMode(false)}
-                        className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
-                            !practiceMode
-                                ? 'bg-[#e0fbfc] text-[#293241] shadow-md'
-                                : 'text-[#98c1d9] hover:text-[#e0fbfc]'
-                        }`}
-                    >
-                        自由操作
-                    </button>
-                    <button
-                        onClick={() => setPracticeMode(true)}
-                        className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
-                            practiceMode
-                                ? 'bg-[#ee6c4d] text-white shadow-md'
-                                : 'text-[#98c1d9] hover:text-[#e0fbfc]'
-                        }`}
-                    >
-                        練習模式
-                    </button>
+                <div className={`${isLandscape ? 'flex-[40] max-w-[380px]' : ''} shrink-0`}>
+                    <div className="flex bg-[#3d5a80] rounded-full p-1 shadow-lg w-fit">
+                        <button
+                            onClick={() => setPracticeMode(false)}
+                            className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
+                                !practiceMode
+                                    ? 'bg-[#e0fbfc] text-[#293241] shadow-md'
+                                    : 'text-[#98c1d9] hover:text-[#e0fbfc]'
+                            }`}
+                        >
+                            自由操作
+                        </button>
+                        <button
+                            onClick={() => setPracticeMode(true)}
+                            className={`px-4 pt-[9px] pb-2 rounded-full text-sm font-semibold leading-none transition-all duration-200 ${
+                                practiceMode
+                                    ? 'bg-[#ee6c4d] text-white shadow-md'
+                                    : 'text-[#98c1d9] hover:text-[#e0fbfc]'
+                            }`}
+                        >
+                            練習模式
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
