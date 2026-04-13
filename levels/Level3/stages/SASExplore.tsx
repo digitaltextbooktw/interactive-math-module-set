@@ -239,7 +239,7 @@ const PHASE_ACTION: Record<Phase, ActionType> = {
 const ACTION_LABELS: Record<ActionType, { text: string; bg: string; color: string }> = {
   info:   { text: '說明', bg: '#F1F5F9', color: '#64748B' },
   action: { text: '動作', bg: '#FFF7ED', color: '#EA580C' },
-  drag:   { text: '拖曳', bg: '#F0FDF4', color: '#16A34A' },
+  drag:   { text: '拖曳', bg: '#ECFDF5', color: '#10B981' },
   auto:   { text: '播放', bg: '#EFF6FF', color: '#3B82F6' },
 };
 
@@ -1047,9 +1047,18 @@ export default function ExploreStage({ onComplete }: Props) {
             const isStep2Anim = i === sasLines.length - 1 && phase === 'sas-step2' && sasLines.length >= 2;
             const isStep3Anim = i === sasLines.length - 1 && phase === 'sas-step3' && sasLines.length >= 3;
             if (isStep0Anim || isStep2Anim || isStep3Anim) return null; // rendered after ruler for layer order
+            // Line is "active" only while its draw animation just played in THIS step
+            // step0 draws line 0, step2 draws line 1, step3 draws line 2
+            const activeInStep =
+              (phase === 'sas-step0' && i === 0) ||
+              (phase === 'sas-step2' && i === 1) ||
+              (phase === 'sas-step3' && i === 2);
+            const lineColor = phase === 'sas-congruent'
+              ? (congruentDone ? '#3d5a80' : '#94A3B8')
+              : (activeInStep ? '#ee6c4d' : '#3d5a80');
             return (
               <line key={`sl${i}`} x1={l.from.x} y1={l.from.y} x2={l.to.x} y2={l.to.y}
-                stroke={phase === 'sas-congruent' ? (congruentDone ? '#3d5a80' : '#94A3B8') : '#ee6c4d'}
+                stroke={lineColor}
                 strokeWidth="2.5"
                 style={{ transition: 'stroke 0.5s' }} />
             );
@@ -1139,6 +1148,24 @@ export default function ExploreStage({ onComplete }: Props) {
                 stroke="#ee6c4d" strokeWidth="2.5"
                 strokeDasharray={lineLen} strokeDashoffset={lineLen}
                 style={{ animation: 'drawLine 0.8s ease-out forwards' }} />
+            );
+          })()}
+
+          {/* Base endpoint dots — above all tools/rulers */}
+          {phase !== 'sas-intro' && phase !== 'sas-congruent' && (() => {
+            const baseDone = sasLines.length >= 1;
+            const pastBase = phase !== 'sas-step0';
+            // Left endpoint: orange during step0~step2 (origin for protractor/compass), dark gray at step3
+            const leftFill = !baseDone ? '#94A3B8' : (phase === 'sas-step3' ? '#3d5a80' : '#ee6c4d');
+            // Right endpoint: orange during step0 and step3 (it's the active point), dark gray in between
+            const rightFill = (phase === 'sas-step0' || phase === 'sas-step3') ? '#ee6c4d' : '#3d5a80';
+            return (
+              <>
+                <circle cx={DRAW_LEFT.x} cy={DRAW_LEFT.y} r="4" fill={leftFill} />
+                {baseDone && (
+                  <circle cx={DRAW_RIGHT.x} cy={DRAW_RIGHT.y} r="4" fill={rightFill} />
+                )}
+              </>
             );
           })()}
 

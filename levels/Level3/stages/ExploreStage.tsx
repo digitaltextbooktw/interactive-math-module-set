@@ -222,7 +222,7 @@ const PHASE_ACTION: Record<Phase, ActionType> = {
 const ACTION_LABELS: Record<ActionType, { text: string; bg: string; color: string }> = {
   info:   { text: '說明', bg: '#F1F5F9', color: '#64748B' },
   action: { text: '動作', bg: '#FFF7ED', color: '#EA580C' },
-  drag:   { text: '拖曳', bg: '#F0FDF4', color: '#16A34A' },
+  drag:   { text: '拖曳', bg: '#ECFDF5', color: '#10B981' },
   auto:   { text: '播放', bg: '#EFF6FF', color: '#3B82F6' },
 };
 
