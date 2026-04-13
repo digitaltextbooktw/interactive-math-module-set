@@ -1,13 +1,16 @@
-import { useState, useCallback, useRef } from 'react';
-import { quizQuestions } from '../data';
+import { useState, useCallback, useRef, useMemo } from 'react';
+import { getCurrentQuizQuestions } from '../data';
+import type { QuizQuestion } from '../../../types';
 import { playSound } from '../../../utils/sound';
 
 interface Props {
   onComplete: (score: number, wrong: number) => void;
 }
 
-function QuizIllustration({ qIndex, answered }: { qIndex: number; answered: number | null }) {
-  const borderColor = answered !== null ? (answered === quizQuestions[qIndex].correctIndex ? '#10B981' : '#EF4444') : '#3d5a80';
+function QuizIllustration({ qIndex, answered, questions }: { qIndex: number; answered: number | null; questions: QuizQuestion[] }) {
+  const q = questions[qIndex];
+  if (!q || !q.id.startsWith('L3')) return null;
+  const borderColor = answered !== null ? (answered === q.correctIndex ? '#10B981' : '#EF4444') : '#3d5a80';
   switch (qIndex) {
     case 0: {
       // Compass on a segment — needle on the right endpoint
@@ -109,9 +112,11 @@ function NavArrow({ direction, disabled, onClick }: { direction: 'left' | 'right
 }
 
 export default function QuizStage({ onComplete }: Props) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const quizQuestions = useMemo(() => getCurrentQuizQuestions(), []);
   const [qIdx, setQIdx] = useState(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(quizQuestions.map(() => null));
-  const [results, setResults] = useState<(boolean | null)[]>(quizQuestions.map(() => null));
+  const [answers, setAnswers] = useState<(number | null)[]>(() => quizQuestions.map(() => null));
+  const [results, setResults] = useState<(boolean | null)[]>(() => quizQuestions.map(() => null));
   const [slideDir, setSlideDir] = useState<'in' | 'out' | null>('in');
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -173,7 +178,7 @@ export default function QuizStage({ onComplete }: Props) {
           animation: slideDir === 'in' ? 'fadeSlideIn 0.3s ease-out' : slideDir === 'out' ? 'fadeSlideOut 0.3s ease-in forwards' : undefined,
         }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(10px, 2vmin, 16px)' }}>
-            <QuizIllustration qIndex={qIdx} answered={answered} />
+            <QuizIllustration qIndex={qIdx} answered={answered} questions={quizQuestions} />
           </div>
           <div style={{ fontSize: 'clamp(18px, 3vmin, 1.6rem)', fontWeight: 800, marginBottom: 'clamp(12px, 2.5vmin, 20px)', color: '#293241', lineHeight: 1.5 }}>
             {q.text}
@@ -212,8 +217,8 @@ export default function QuizStage({ onComplete }: Props) {
               );
             })}
           </div>
-          {/* Explanation — fixed height reservation so options never move */}
-          <div style={{ minHeight: 56, marginTop: 'clamp(10px, 2vmin, 14px)' }}>
+          {/* Explanation — pre-reserved space, always in flow so card height stays fixed */}
+          <div style={{ minHeight: 'clamp(56px, 10vmin, 80px)', marginTop: 'clamp(10px, 2vmin, 14px)' }}>
             {answered !== null && (
               <div style={{
                 padding: 'clamp(10px, 2vmin, 14px) clamp(14px, 2.5vmin, 20px)', borderRadius: 12,

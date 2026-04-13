@@ -877,24 +877,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                     </>
                   )}
                 </svg>
-                {phase === 'task2-puzzle-drag' && (
-                  <div style={{
-                    position: 'absolute',
-                    right: 12,
-                    bottom: 10,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: '#64748B',
-                    background: 'rgba(255,255,255,0.92)',
-                    padding: '4px 8px',
-                    borderRadius: 999,
-                    border: '1px solid #E5E7EB',
-                    pointerEvents: 'none',
-                  }}>
-                    puzzle touch fix v3
-                  </div>
-                )}
-
               </div>
           );
         })()}
