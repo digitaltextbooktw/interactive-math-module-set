@@ -273,7 +273,7 @@ export default function ExploreStage({ onComplete }: Props) {
   const [afTop, setAfTop] = useState<Point>(UF_TOP);
   const [afDragCount, setAfDragCount] = useState(0);
   const [afShowBtn, setAfShowBtn] = useState(false);
-  const afDragRef = useRef(false);
+  const afDragRef = useRef<number | null>(null); // active pointerId
   const afSvgRef = useRef<SVGSVGElement>(null);
   const afTimerStartedRef = useRef(false);
 
@@ -281,7 +281,7 @@ export default function ExploreStage({ onComplete }: Props) {
   const [aaaScale, setAaaScale] = useState(1);
   const [aaaDragCount, setAaaDragCount] = useState(0);
   const [aaaShowDone, setAaaShowDone] = useState(false);
-  const aaaDragRef = useRef<{ startY: number; startScale: number } | null>(null);
+  const aaaDragRef = useRef<{ startY: number; startScale: number; pointerId: number } | null>(null);
   const aaaSvgRef = useRef<SVGSVGElement>(null);
   const aaaTimerStartedRef = useRef(false);
 
@@ -381,7 +381,7 @@ export default function ExploreStage({ onComplete }: Props) {
   };
   const resetAngleFree = () => {
     setAfTop(UF_TOP); setAfDragCount(0); setAfShowBtn(false);
-    afDragRef.current = false; afTimerStartedRef.current = false;
+    afDragRef.current = null; afTimerStartedRef.current = false;
   };
   const resetAaa = () => {
     setAaaScale(1); setAaaDragCount(0); setAaaShowDone(false);
@@ -460,14 +460,15 @@ export default function ExploreStage({ onComplete }: Props) {
   };
 
   const onAfDown = useCallback((e: React.PointerEvent) => {
+    if (afDragRef.current !== null) return; // ignore second finger
     e.preventDefault();
     (e.target as Element).setPointerCapture(e.pointerId);
-    afDragRef.current = true;
+    afDragRef.current = e.pointerId;
     playSound('click');
   }, []);
 
   const onAfMove = useCallback((e: React.PointerEvent) => {
-    if (!afDragRef.current) return;
+    if (afDragRef.current !== e.pointerId) return;
     const pt = afToSvg(e);
     if (!pt) return;
     // Constrain to arc (radius = SAS_B_RADIUS centered at UF_LEFT)
@@ -480,9 +481,9 @@ export default function ExploreStage({ onComplete }: Props) {
     });
   }, []);
 
-  const onAfUp = useCallback(() => {
-    if (!afDragRef.current) return;
-    afDragRef.current = false;
+  const onAfUp = useCallback((e: React.PointerEvent) => {
+    if (afDragRef.current !== e.pointerId) return;
+    afDragRef.current = null;
     // First drag → start a fixed 5s countdown to unlock the next-step button.
     // Using a ref so subsequent drags do NOT reset the timer.
     if (!afTimerStartedRef.current) {
@@ -494,26 +495,25 @@ export default function ExploreStage({ onComplete }: Props) {
 
   // ═══ AAA phase drag handlers (vertical drag anywhere on the SVG → uniform scale) ═══
   const onAaaDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (aaaDragRef.current) return; // ignore second finger
     e.preventDefault();
-    // Capture on the SVG root so pointer events keep firing even if the cursor
-    // leaves the polygon (or the SVG entirely) during a drag.
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
-    aaaDragRef.current = { startY: e.clientY, startScale: aaaScale };
+    aaaDragRef.current = { startY: e.clientY, startScale: aaaScale, pointerId: e.pointerId };
     playSound('click');
   }, [aaaScale]);
 
   const onAaaMove = useCallback((e: React.PointerEvent) => {
-    if (!aaaDragRef.current) return;
+    if (!aaaDragRef.current || aaaDragRef.current.pointerId !== e.pointerId) return;
     const dy = e.clientY - aaaDragRef.current.startY;
     // Drag up → larger, drag down → smaller
-    const newScale = Math.max(0.5, Math.min(1.6, aaaDragRef.current.startScale - dy / 150));
+    const newScale = Math.max(0.5, Math.min(2.5, aaaDragRef.current.startScale - dy / 150));
     setAaaScale(newScale);
   }, []);
 
-  const onAaaUp = useCallback((e?: React.PointerEvent<SVGSVGElement>) => {
-    if (!aaaDragRef.current) return;
+  const onAaaUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!aaaDragRef.current || aaaDragRef.current.pointerId !== e.pointerId) return;
     aaaDragRef.current = null;
-    if (e && e.currentTarget && typeof e.currentTarget.releasePointerCapture === 'function') {
+    if (e.currentTarget && typeof e.currentTarget.releasePointerCapture === 'function') {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
     }
     // First drag → start a fixed 5s countdown. Subsequent drags don't reset it.
