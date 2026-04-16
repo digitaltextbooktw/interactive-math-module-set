@@ -12,7 +12,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
     const [step, setStep] = useState(0);
 
     const rawBase = C.x - A.x;
-    const rawHeight = A.y - B.y;
+    const rawHeight = Math.abs(A.y - B.y);
     const base = Math.round(rawBase / 30);
     const height = Math.round(rawHeight / 30);
     const area = Math.round((base * height) / 2);
@@ -111,7 +111,7 @@ const AreaCalculation: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({ se
                     {steps[step]}
                 </div>
                 <button onClick={() => setStep(prev => Math.min(4, prev + 1))} className="p-4 rounded-2xl bg-white border border-[#3d5a80]/12 shadow-md hover:bg-[#e0fbfc] transition-all"><ChevronRightIcon className="w-8 h-8 text-[#3d5a80]" /></button>
-                <button onClick={() => setStep(0)} className="p-4 rounded-2xl bg-[#ee6c4d] shadow-xl hover:scale-105 transition-all"><RotateCcwIcon className="w-8 h-8 text-white" /></button>
+                <button onClick={() => { setStep(0); setB({ x: 250, y: 100 }); setC({ x: 400, y: 300 }); }} className="p-4 rounded-2xl bg-[#ee6c4d] shadow-xl hover:scale-105 transition-all"><RotateCcwIcon className="w-8 h-8 text-white" /></button>
             </div>
         </div>
     );

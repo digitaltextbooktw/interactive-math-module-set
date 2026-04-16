@@ -56,11 +56,11 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
             return (
                 <svg width="100%" height="240" viewBox="0 0 500 260" className="select-none overflow-visible">
                     <polygon points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}`} fill="#98c1d9" fillOpacity="0.2" stroke="#3d5a80" strokeWidth="3" strokeLinejoin="round" />
-                    <g transform="translate(250, 40)">
-                         <circle r="12" fill="#3d5a80" />
-                         <path d="M-6 0 L-2 4 L6 -4" fill="none" stroke="white" strokeWidth="3" />
-                         <text x="20" y="7" fill="#3d5a80" className="font-black text-xl">滿足構成條件</text>
+                    <g transform="translate(250, 8)">
+                        <circle r="12" fill="#3d5a80" />
+                        <path d="M-6 0 L-2 4 L6 -4" fill="none" stroke="white" strokeWidth="3" />
                     </g>
+                    <text x="250" y="45" fill="#3d5a80" className="font-black text-xl" textAnchor="middle">滿足構成條件</text>
                 </svg>
             );
         } else {
@@ -80,12 +80,12 @@ const TriangleInequality: React.FC<{ setInfo: (info: ModuleInfo) => void }> = ({
                     <line x1={x1_end} y1={yTop} x2={x2_end} y2={yTop} stroke="#98c1d9" strokeWidth="6" strokeLinecap="round" />
                     <line x1={x2_end} y1={yTop} x2={xMax_end} y2={yTop} stroke="#ee6c4d" strokeWidth="3" strokeDasharray="6,4" />
                     <line x1={startX} y1={yBottom} x2={xMax_end} y2={yBottom} stroke="#293241" strokeWidth="6" strokeLinecap="round" />
-                    <g transform="translate(250, 40)">
-                         <circle r="12" fill="#f87171" />
-                         <line x1="-5" y1="-5" x2="5" y2="5" stroke="white" strokeWidth="3" />
-                         <line x1="5" y1="-5" x2="-5" y2="5" stroke="white" strokeWidth="3" />
-                         <text x="20" y="7" fill="#f87171" className="font-black text-xl">無法構成三角形</text>
+                    <g transform="translate(250, 8)">
+                        <circle r="12" fill="#f87171" />
+                        <line x1="-5" y1="-5" x2="5" y2="5" stroke="white" strokeWidth="3" />
+                        <line x1="5" y1="-5" x2="-5" y2="5" stroke="white" strokeWidth="3" />
                     </g>
+                    <text x="250" y="45" fill="#f87171" className="font-black text-xl" textAnchor="middle">無法構成三角形</text>
                     <text x={svgWidth / 2} y={240} fontSize="18" fill="#3d5a80" textAnchor="middle" className="font-en font-bold">
                         兩短邊之和 ({sorted[0].val} + {sorted[1].val} = {sumShort}) ≤ 最長邊 ({maxVal})
                     </text>

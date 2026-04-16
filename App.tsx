@@ -290,8 +290,30 @@ const App: React.FC = () => {
                 {/* 右側：側邊資訊欄 */}
                 <aside className={`flex-[40] flex flex-col gap-4 ${isLandscape ? 'max-w-[380px]' : ''} min-h-0 relative z-[55]`}>
 
+                    {/* 操作提示 */}
+                    <div className={`bg-[#fdf5ef] rounded-[1.5rem] p-5 border border-[#e0c9b5]/30 shadow-md shrink-0`}>
+                        <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
+                            <LightbulbIcon className="w-5 h-5" />
+                            <span className="font-black text-xl">操作提示</span>
+                        </div>
+                        <p className="text-base text-[#555555] leading-relaxed font-medium">
+                            {currentInfo.aiTip}
+                        </p>
+                    </div>
+
+                    {/* 幾何概念 */}
+                    <div className={`bg-[#f5f0eb] rounded-[1.5rem] p-5 border border-[#c4b5a5]/30 shadow-md ${isLandscape ? 'shrink' : 'shrink-0'}`}>
+                        <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
+                            <BookIcon className="w-5 h-5" />
+                            <span className="font-black text-xl">幾何概念</span>
+                        </div>
+                        <p className="text-base text-[#555555] leading-relaxed font-medium whitespace-pre-line">
+                            {currentInfo.concept}
+                        </p>
+                    </div>
+
                     {/* 數據看板 */}
-                    <div className="bg-[#EEEEEE] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] shrink-0">
+                    <div className={`bg-[#EEEEEE] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] ${isLandscape ? 'shrink' : 'shrink-0 mb-4'}`}>
                         <div className="space-y-2">
                             {currentInfo.data.map(item => (
                                 <div key={item.label} className="flex justify-between items-center border-b border-[#3d5a80]/5 pb-1">
@@ -299,29 +321,6 @@ const App: React.FC = () => {
                                     <span className={`font-black text-[#ee6c4d] ${/^[\d.°%+\-×÷=\s\/]+$/.test(item.value) ? 'text-xl font-en' : 'text-base'}`}>{item.value}</span>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-
-                    {/* 概念與提示區域 */}
-                    <div className={`flex-1 flex flex-col gap-4 ${isLandscape ? 'overflow-y-auto pr-1' : 'pr-0'} min-h-0`}>
-                        <div className={`bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md ${isLandscape ? 'shrink' : 'shrink-0'}`}>
-                            <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
-                                <BookIcon className="w-5 h-5" />
-                                <span className="font-black text-xl">幾何概念</span>
-                            </div>
-                            <p className="text-base text-[#e0fbfc] leading-relaxed font-medium whitespace-pre-line">
-                                {currentInfo.concept}
-                            </p>
-                        </div>
-
-                        <div className={`bg-[#293241] rounded-[1.5rem] p-5 border border-[#3d5a80] shadow-md ${isLandscape ? 'shrink' : 'shrink-0 mb-4'}`}>
-                            <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
-                                <LightbulbIcon className="w-5 h-5" />
-                                <span className="font-black text-xl">操作提示</span>
-                            </div>
-                            <p className="text-base text-[#e0fbfc] leading-relaxed font-medium">
-                                {currentInfo.aiTip}
-                            </p>
                         </div>
                     </div>
                 </aside>

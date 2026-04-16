@@ -109,6 +109,13 @@ const AngleBasics: React.FC<AngleBasicsProps> = ({ setInfo }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-[#EEEEEE] select-none p-4 sm:p-6 overflow-hidden">
+            {/* 角的類型標籤 */}
+            <div className="text-center pt-2 pb-1 shrink-0">
+                <span className="inline-block px-8 py-1 rounded-full bg-[#ee6c4d] text-white font-bold text-2xl">
+                    {angleType.name}
+                </span>
+            </div>
+
             {/* 主要旋轉區域 */}
             <div className="flex-1 relative overflow-visible min-h-0">
                 <svg
