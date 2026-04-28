@@ -96,7 +96,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   useEffect(() => {
     if (showButton) return;
     const check = () => {
-      if (dragCount >= 2 || Date.now() - startTime.current > 10000) setShowNudge(true);
+      if (dragCount >= 1 || Date.now() - startTime.current > 10000) setShowNudge(true);
     };
     check();
     const iv = setInterval(check, 2000);
@@ -105,7 +105,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
 
   // Show "I found it" button after nudge + 2 more drags
   useEffect(() => {
-    if (showNudge && dragCount >= 4 && !showButton) setShowButton(true);
+    if (showNudge && dragCount >= 2 && !showButton) setShowButton(true);
   }, [showNudge, dragCount, showButton]);
 
   // Drag

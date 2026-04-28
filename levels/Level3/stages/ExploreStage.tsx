@@ -542,8 +542,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     uqDragRef.current = null;
     setUqR(UQ_R_FIXED);
     uqDragCount.current++;
-    if (uqDragCount.current >= 3) setUqShowHint(true);
-    if (uqDragCount.current >= 5) setUqShowBtn(true);
+    if (uqDragCount.current >= 1) setUqShowHint(true);
+    if (uqDragCount.current >= 2) setUqShowBtn(true);
   }, [UQ_R_FIXED]);
 
   const moveUnlockedDrag = useCallback((pt: Point) => {
@@ -558,8 +558,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     if (!uqDragRef.current) return;
     uqDragRef.current = null;
     uqDragCount.current++;
-    if (uqDragCount.current >= 3) setUqShowHint(true);
-    if (uqDragCount.current >= 5) setUqShowBtn(true);
+    if (uqDragCount.current >= 1) setUqShowHint(true);
+    if (uqDragCount.current >= 2) setUqShowBtn(true);
   }, []);
 
   useEffect(() => {
