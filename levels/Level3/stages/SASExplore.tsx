@@ -281,7 +281,7 @@ export default function ExploreStage({ onComplete }: Props) {
   const [aaaScale, setAaaScale] = useState(1);
   const [aaaDragCount, setAaaDragCount] = useState(0);
   const [aaaShowDone, setAaaShowDone] = useState(false);
-  const aaaDragRef = useRef<{ startY: number; startScale: number; pointerId: number } | null>(null);
+  const aaaDragRef = useRef<{ startRadius: number; startScale: number; pointerId: number; centroidX: number; centroidY: number } | null>(null);
   const aaaSvgRef = useRef<SVGSVGElement>(null);
   const aaaTimerStartedRef = useRef(false);
 
@@ -484,29 +484,51 @@ export default function ExploreStage({ onComplete }: Props) {
   const onAfUp = useCallback((e: React.PointerEvent) => {
     if (afDragRef.current !== e.pointerId) return;
     afDragRef.current = null;
-    // First drag → start a fixed 5s countdown to unlock the next-step button.
+    // First drag → start a short 1s countdown to unlock the next-step button.
     // Using a ref so subsequent drags do NOT reset the timer.
     if (!afTimerStartedRef.current) {
       afTimerStartedRef.current = true;
-      setTimeout(() => setAfShowBtn(true), 5000);
+      setTimeout(() => setAfShowBtn(true), 1000);
     }
     setAfDragCount(c => c + 1);
   }, []);
 
-  // ═══ AAA phase drag handlers (vertical drag anywhere on the SVG → uniform scale) ═══
+  // ═══ AAA phase drag handlers (radial drag → uniform scale around triangle centroid) ═══
+  // Drag the pointer away from the centroid → larger; toward the centroid → smaller.
+  // Works for both mouse and touch via PointerEvents, and is direction-agnostic so it
+  // matches the user's intent regardless of which vertex they grab.
   const onAaaDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     if (aaaDragRef.current) return; // ignore second finger
     e.preventDefault();
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
-    aaaDragRef.current = { startY: e.clientY, startScale: aaaScale, pointerId: e.pointerId };
+    const svg = e.currentTarget;
+    try { svg.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    // Convert the (fixed) viewBox-space centroid to screen coords once at drag start
+    const ctm = svg.getScreenCTM();
+    const cxVB = (UF_LEFT.x + UF_RIGHT.x + UF_TOP.x) / 3;
+    const cyVB = (UF_LEFT.y + UF_RIGHT.y + UF_TOP.y) / 3;
+    let centroidX = e.clientX, centroidY = e.clientY;
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = cxVB; pt.y = cyVB;
+      const screen = pt.matrixTransform(ctm);
+      centroidX = screen.x;
+      centroidY = screen.y;
+    }
+    const r0 = Math.hypot(e.clientX - centroidX, e.clientY - centroidY);
+    aaaDragRef.current = {
+      startRadius: Math.max(r0, 12), // floor avoids extreme ratios when grabbing near centroid
+      startScale: aaaScale,
+      pointerId: e.pointerId,
+      centroidX, centroidY,
+    };
     playSound('click');
   }, [aaaScale]);
 
   const onAaaMove = useCallback((e: React.PointerEvent) => {
-    if (!aaaDragRef.current || aaaDragRef.current.pointerId !== e.pointerId) return;
-    const dy = e.clientY - aaaDragRef.current.startY;
-    // Drag up → larger, drag down → smaller
-    const newScale = Math.max(0.5, Math.min(2.5, aaaDragRef.current.startScale - dy / 150));
+    const drag = aaaDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const r = Math.hypot(e.clientX - drag.centroidX, e.clientY - drag.centroidY);
+    const newScale = Math.max(0.5, Math.min(2.5, drag.startScale * (r / drag.startRadius)));
     setAaaScale(newScale);
   }, []);
 
@@ -516,10 +538,10 @@ export default function ExploreStage({ onComplete }: Props) {
     if (e.currentTarget && typeof e.currentTarget.releasePointerCapture === 'function') {
       try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
     }
-    // First drag → start a fixed 5s countdown. Subsequent drags don't reset it.
+    // First drag → start a short 1s countdown. Subsequent drags don't reset it.
     if (!aaaTimerStartedRef.current) {
       aaaTimerStartedRef.current = true;
-      setTimeout(() => setAaaShowDone(true), 5000);
+      setTimeout(() => setAaaShowDone(true), 1000);
     }
     setAaaDragCount(c => c + 1);
   }, []);

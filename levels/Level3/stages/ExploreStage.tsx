@@ -177,7 +177,6 @@ type Phase =
   | 'task2-congruent'                                                // show congruent animation
   // SSS uniqueness exploration
   | 'task2-question'                                                 // popup: why SSS = congruent?
-  | 'task2-puzzle'                                                   // show 3 line segments
   | 'task2-puzzle-drag'                                              // drag segments to form triangle
   | 'task2-locked'                                                   // locked drag: R can't move
   | 'task2-unlocked'                                                 // free drag: R moves, not congruent
@@ -212,7 +211,6 @@ const PHASE_ACTION: Record<Phase, ActionType> = {
   'task2-done-r': 'info',
   'task2-congruent': 'auto',
   'task2-question': 'info',
-  'task2-puzzle': 'info',
   'task2-puzzle-drag': 'drag',
   'task2-locked': 'drag',
   'task2-unlocked': 'drag',
@@ -246,7 +244,6 @@ const STEP_HINTS: Record<string, string> = {
   'task2-done-r':      'SSS 三角形完成！',
   'task2-congruent':   '三邊相等 → 形狀完全一樣 = SSS 全等！',
   'task2-question':    '為什麼三條邊一樣就一定全等？',
-  'task2-puzzle':      '三條邊長分別為 3、4、5 的線段',
   'task2-puzzle-drag': '拖動 3 和 4 到底邊的端點上',
   'task2-locked':      '邊長鎖定了！拖動頂點試試？',
   'task2-unlocked':    '邊長可以變了，自由拖動頂點看看',
@@ -257,7 +254,7 @@ const STEP_HINTS: Record<string, string> = {
 const ALL_STEPS: Phase[] = [
   'task1-show', 'task1-ruler-src', 'task1-ruler-tgt', 'task1-done',
   'task2-ruler', 'task2-pin', 'task2-step0', 'task2-arc1', 'task2-ruler2', 'task2-pin2', 'task2-open2', 'task2-arc2', 'task2-step2', 'task2-draw-l', 'task2-done-l', 'task2-draw-r', 'task2-done-r', 'task2-congruent',
-  'task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
+  'task2-question', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done',
 ];
 
 export default function ExploreStage({ onComplete }: { onComplete: () => void }) {
@@ -673,7 +670,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
     else if (target === 'task2-done-r') { resetTask2(); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }, { center: SSS_RIGHT, radius: SSS_C }]); setSssVertex(SSS_TOP); setSssLines([{ from: SSS_LEFT, to: SSS_TOP }, { from: SSS_RIGHT, to: SSS_TOP }]); }
     else if (target === 'task2-congruent') { resetTask2(); setSssArcs([{ center: SSS_LEFT, radius: SSS_B }, { center: SSS_RIGHT, radius: SSS_C }]); setSssVertex(SSS_TOP); setSssLines([{ from: SSS_LEFT, to: SSS_TOP }, { from: SSS_RIGHT, to: SSS_TOP }]); }
     else if (target === 'task2-question') { resetTask2(); resetPuzzle(); resetUnique(); }
-    else if (target === 'task2-puzzle') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-puzzle-drag') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-locked') { resetTask2(); resetPuzzle(); resetUnique(); }
     else if (target === 'task2-unlocked') { resetTask2(); resetPuzzle(); resetUnique(); }
@@ -724,7 +720,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
   const target = getTarget();
 
   // SSS exploration modules — full takeover with nav overlay
-  const isModulePhase = ['task2-question', 'task2-puzzle', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done'].includes(phase);
+  const isModulePhase = ['task2-question', 'task2-puzzle-drag', 'task2-locked', 'task2-unlocked', 'task2-sss-done'].includes(phase);
   if (isModulePhase) {
     const moduleActionLabel = (phaseAction === 'drag' && dragDone) ? ACTION_LABELS.info : ACTION_LABELS[phaseAction];
     const moduleHint = pzClosed && phase === 'task2-puzzle-drag' ? '拼好了！跟原件形狀完全一樣。' : hintText;
@@ -751,7 +747,7 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
         )}
 
         {/* ═══ Puzzle: drag segments freely, snap to base endpoints ═══ */}
-        {(phase === 'task2-puzzle' || phase === 'task2-puzzle-drag') && (() => {
+        {phase === 'task2-puzzle-drag' && (() => {
           const toSvg = (e: React.PointerEvent): Point | null => {
             return clientToSvgPoint(pzSvgRef.current, e.clientX, e.clientY);
           };
@@ -791,22 +787,8 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                   {/* Left: original triangle */}
                   <OriginalTriangle />
 
-                  {phase !== 'task2-puzzle-drag' ? (
-                    <>
-                      {/* Step 1: Show 3 lines — 5 aligned with original base */}
-                      <line x1={340} y1={80} x2={460} y2={80} stroke="#534AB7" strokeWidth={6} strokeLinecap="round" />
-                      <text x={400} y={68} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#534AB7">3</text>
-
-                      <line x1={330} y1={130} x2={490} y2={130} stroke="#0F6E56" strokeWidth={6} strokeLinecap="round" />
-                      <text x={410} y={118} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#0F6E56">4</text>
-
-                      <line x1={PZ_BASE_L.x} y1={T1_SRC_A.y} x2={PZ_BASE_R.x} y2={T1_SRC_A.y} stroke="#3d5a80" strokeWidth={6} strokeLinecap="round" />
-                      <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={T1_SRC_A.y - 12} textAnchor="middle" className="font-en" fontSize="15" fontWeight="700" fill="#3d5a80">5</text>
-                    </>
-                  ) : (
-                    <>
-                      {/* Step 2: Base fixed, drag 3 & 4 to snap */}
-                      <line x1={PZ_BASE_L.x} y1={PZ_BASE_L.y} x2={PZ_BASE_R.x} y2={PZ_BASE_R.y} stroke="#3d5a80" strokeWidth={6} strokeLinecap="round" />
+                  {/* Base fixed, drag 3 & 4 to snap */}
+                  <line x1={PZ_BASE_L.x} y1={PZ_BASE_L.y} x2={PZ_BASE_R.x} y2={PZ_BASE_R.y} stroke="#3d5a80" strokeWidth={6} strokeLinecap="round" />
                       <circle cx={PZ_BASE_L.x} cy={PZ_BASE_L.y} r={5} fill="#3d5a80" />
                       <circle cx={PZ_BASE_R.x} cy={PZ_BASE_R.y} r={5} fill="#3d5a80" />
                       <text x={(PZ_BASE_L.x + PZ_BASE_R.x) / 2} y={PZ_BASE_L.y + 20} textAnchor="middle" className="font-en" fontSize="13" fontWeight="700" fill="#3d5a80">5</text>
@@ -874,8 +856,6 @@ export default function ExploreStage({ onComplete }: { onComplete: () => void })
                           </>
                         );
                       })()}
-                    </>
-                  )}
                 </svg>
               </div>
           );

@@ -292,7 +292,7 @@ const App: React.FC = () => {
 
                     {/* 操作提示 */}
                     <div className={`bg-[#fdf5ef] rounded-[1.5rem] p-5 border border-[#e0c9b5]/30 shadow-md shrink-0`}>
-                        <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
+                        <div className="flex items-center gap-2 text-[#3d5a80] mb-2">
                             <LightbulbIcon className="w-5 h-5" />
                             <span className="font-black text-xl">操作提示</span>
                         </div>
@@ -303,7 +303,7 @@ const App: React.FC = () => {
 
                     {/* 幾何概念 */}
                     <div className={`bg-[#f5f0eb] rounded-[1.5rem] p-5 border border-[#c4b5a5]/30 shadow-md ${isLandscape ? 'shrink' : 'shrink-0'}`}>
-                        <div className="flex items-center gap-2 text-[#ee6c4d] mb-2">
+                        <div className="flex items-center gap-2 text-[#3d5a80] mb-2">
                             <BookIcon className="w-5 h-5" />
                             <span className="font-black text-xl">幾何概念</span>
                         </div>
@@ -313,7 +313,7 @@ const App: React.FC = () => {
                     </div>
 
                     {/* 數據看板 */}
-                    <div className={`bg-[#EEEEEE] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] ${isLandscape ? 'shrink' : 'shrink-0 mb-4'}`}>
+                    <div className={`bg-[#dcdcdc] rounded-[1.5rem] p-5 shadow-lg border-l-[8px] border-[#ee6c4d] ${isLandscape ? 'shrink' : 'shrink-0 mb-4'}`}>
                         <div className="space-y-2">
                             {currentInfo.data.map(item => (
                                 <div key={item.label} className="flex justify-between items-center border-b border-[#3d5a80]/5 pb-1">
